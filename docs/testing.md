@@ -594,3 +594,148 @@ Every major processing capability should have:
 4. a record of important limitations.
 
 When a test reveals that the current model cannot represent a requirement, that limitation should be documented before changing the schema.
+
+## Database Reproducibility Test
+
+The database structure was validated by rebuilding it from the canonical SQL files into a separate empty PostgreSQL database.
+
+Test database:
+
+```text
+news_test
+```
+
+The original `news` database was not modified during this test.
+
+### Schema reconstruction
+
+Applied:
+
+```bash
+psql -d news_test -f database/schema.sql
+```
+
+Result:
+
+* 13 tables created successfully.
+* No SQL errors occurred.
+
+Verified tables:
+
+```text
+article_evidence
+article_stories
+articles
+claim_assessments
+claim_evidence
+claim_sources
+claims
+evidence
+evidence_sources
+source_feeds
+source_policies
+sources
+stories
+```
+
+### View reconstruction
+
+Applied:
+
+```bash
+psql -d news_test -f database/views.sql
+```
+
+Result:
+
+* 3 views created successfully.
+* No SQL errors occurred.
+
+Verified views:
+
+```text
+claim_evidence_conflicts
+claim_intelligence
+claim_overview
+```
+
+The three views were queried against the empty database and returned zero rows without errors.
+
+This demonstrates that the current database structure can be reconstructed from the repository SQL files without depending on the existing populated `news` database.
+
+## Synthetic Test Data
+
+Reproducible synthetic test data was added under:
+
+```text
+database/seeds/test_data.sql
+```
+
+The data is explicitly synthetic and must not be treated as production or real-world evidence.
+
+The test data covers:
+
+* article → story relationships
+* claim → article relationships
+* claim → evidence relationships
+* evidence → source provenance
+* supporting evidence
+* contradicting evidence
+* historical claim assessments
+* multiple articles referring to the same underlying evidence
+* an additional evidence item with a different registered source
+
+The test scenario demonstrates that two articles can refer to the same evidence:
+
+```text
+Test Article A ──based_on──┐
+                           ├──> Test Evidence A
+Test Article B ──based_on──┘
+```
+
+Therefore, article count must not be treated as evidence count or as a direct measure of independent confirmation.
+
+The resulting test claim has:
+
+```text
+4 evidence records
+3 supporting evidence records
+1 contradicting evidence record
+```
+
+The claim's current status is `supported`, while its historical assessments preserve both:
+
+```text
+unclear
+supported
+```
+
+The historical `unclear` assessment was not overwritten when the later `supported` assessment was recorded.
+
+## Provenance Test Result
+
+A query over `article_evidence` confirmed:
+
+```text
+Test Article A → Test Evidence A
+Test Article B → Test Evidence A
+```
+
+The evidence-level query confirmed that `Test Evidence A` is associated with two articles but remains one evidence record.
+
+This validates the distinction between:
+
+* number of articles
+* number of evidence records
+* number of claims
+* provenance of the underlying evidence
+
+The test does not establish that different registered sources are truly independent. `producer_count` remains a descriptive provenance count, not an independence score.
+
+## Current Testing Principle
+
+Repeated reporting must not automatically be interpreted as independent confirmation.
+
+Evidence provenance must be examined before counting confirmations.
+
+No schema change was required to represent these cases.

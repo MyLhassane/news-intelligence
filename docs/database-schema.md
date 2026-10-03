@@ -725,3 +725,80 @@ These files should eventually reproduce the validated database structure and vie
 They should be treated as project artifacts, not manually maintained descriptions that can drift from the actual schema.
 
 Before declaring them canonical, they must be compared against the currently tested PostgreSQL database.
+
+## Provenance and Evidence Multiplicity
+
+The schema deliberately separates articles from evidence.
+
+An article may refer to an evidence record through `article_evidence`, while a claim may be connected to the same evidence through `claim_evidence`.
+
+This allows multiple articles to reference one underlying evidence item without duplicating the evidence itself.
+
+Example:
+
+```text
+Article A ──based_on──┐
+                      ├──> Evidence A ──supports──> Claim
+Article B ──based_on──┘
+```
+
+Therefore:
+
+```text
+article count ≠ evidence count
+```
+
+and repeated reporting must not automatically be treated as independent confirmation.
+
+### Evidence provenance
+
+`evidence_sources` records the registered source relationships of an evidence item.
+
+The current schema can therefore represent:
+
+* producer
+* publisher
+* issuer
+* participant
+* author
+* other
+
+`producer_count`, `issuer_count`, and `publisher_count` in `claim_overview` are descriptive provenance counts only.
+
+They are not trust scores, confidence scores, or independence measurements.
+
+A different registered source does not by itself prove that two evidence items are independent.
+
+### Article evidence vs claim evidence
+
+These relationships have different purposes:
+
+* `article_evidence` describes how an article relates to an evidence item.
+* `claim_evidence` describes how an evidence item relates to a claim.
+
+The existence of an `article_evidence` relationship does not automatically mean that the linked evidence supports every claim appearing in that article.
+
+### Historical assessments
+
+`claims.status` represents the current quick status.
+
+`claim_assessments` preserves historical assessments.
+
+A later assessment must not overwrite an earlier assessment.
+
+The synthetic database test demonstrated:
+
+```text
+assessment 1 → unclear
+assessment 2 → supported
+```
+
+while both records remained in `claim_assessments`.
+
+This preserves an auditable assessment history.
+
+### Schema decision
+
+The reproducibility and provenance tests did not identify a requirement for an additional table or column.
+
+The current schema is sufficient to represent the tested cases.
