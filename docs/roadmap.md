@@ -2,7 +2,7 @@
 
 ## 1. Current Project State
 
-The project has completed its initial architecture and data-model validation phase.
+The project has completed its initial architecture, data-model validation, database canonicalization, and reproducibility/provenance testing phases.
 
 The PostgreSQL model has been created and manually tested against:
 
@@ -15,7 +15,7 @@ The PostgreSQL model has been created and manually tested against:
 * historical assessments,
 * and analytical database views.
 
-The repository has now been created with documentation intended to preserve the project's architecture, decisions, testing history, and operating principles.
+The repository now contains the canonical SQL representation of the validated database structure, reproducible synthetic test data, and documentation intended to preserve the project's architecture, decisions, testing history, and operating principles.
 
 The system is **not yet a production news-processing system**.
 
@@ -75,6 +75,41 @@ Created and tested:
 * `claim_overview`
 * `claim_evidence_conflicts`
 
+### Database Canonicalization
+
+Completed:
+
+* actual tested PostgreSQL schema extracted into `database/schema.sql`,
+* actual tested PostgreSQL views extracted into `database/views.sql`,
+* schema reconstruction tested in a separate `news_test` database,
+* all 13 expected tables recreated successfully,
+* all 3 expected views recreated successfully,
+* empty-database queries against the views completed without errors.
+
+The repository SQL files are derived from the validated PostgreSQL database rather than manually reconstructed.
+
+### Reproducible Test Data
+
+Completed:
+
+* synthetic test data added under `database/seeds/test_data.sql`,
+* article/story relationships tested,
+* claim/article relationships tested,
+* claim/evidence relationships tested,
+* supporting and contradicting evidence tested,
+* evidence provenance tested,
+* multiple articles referring to the same evidence tested,
+* historical assessment changes tested.
+
+The synthetic data is explicitly identified as synthetic and must not be treated as production or real-world evidence.
+
+The tests demonstrated that:
+
+* article count must not be treated as evidence count,
+* repeated reporting does not automatically establish independent confirmation,
+* provenance counts are descriptive and not independence or trust scores,
+* historical assessments can be preserved without overwriting earlier assessments.
+
 ### Repository Foundation
 
 Created:
@@ -91,76 +126,98 @@ Created:
 * architectural decisions documentation,
 * roadmap documentation.
 
+### Current Repository Milestone
+
+The completed reproducibility and provenance milestone was committed as:
+
+```text
+7c8883f Document database reproducibility and provenance tests
+```
+
+The local `main` branch and `origin/main` are synchronized after this milestone.
+
 ---
 
 ## 3. Current Work
 
-The immediate objective is to turn the manually validated design into a reproducible project.
+The current implementation stage is:
 
-### Current tasks
+**Baseline Ingestion**
 
-1. Extract the actual tested PostgreSQL schema into:
+The objective is to turn the validated data model into the smallest deterministic article-ingestion pipeline.
 
-   * `database/schema.sql`
+The first implementation should establish a controlled and reproducible path from an input feed to stored `articles`.
 
-2. Extract the actual tested PostgreSQL views into:
+### Current responsibilities
 
-   * `database/views.sql`
+The baseline ingestion stage should:
 
-3. Preserve the tested database model exactly rather than reconstructing it manually.
+* read a configured feed,
+* parse feed items,
+* normalize basic article fields,
+* validate required fields,
+* associate articles with `source_id` and `feed_id`,
+* store valid articles,
+* prevent duplicate insertion,
+* preserve discovery information,
+* produce clear and testable results.
 
-4. Create reproducible test/seed data where appropriate.
+The initial implementation should use a controlled local feed fixture before depending on external feeds.
 
-5. Establish a repeatable way to initialize and validate the database.
+### Initial article fields
 
-6. Review repository documentation for consistency before the first meaningful Git commit.
+Required:
+
+* `source_id`
+* `feed_id`
+* `title`
+* `url`
+
+Optional:
+
+* `author`
+* `published_at`
+* `language`
+* `content`
+
+Database-generated fields such as `discovered_at`, `created_at`, and `updated_at` remain under database control.
+
+### Baseline ingestion flow
+
+```text
+Feed
+  ↓
+Parse
+  ↓
+Normalize basic fields
+  ↓
+Validate required fields
+  ↓
+Insert article
+```
+
+The ingestion stage does not perform story matching, claim extraction, evidence extraction, or assessment.
+
+### Baseline ingestion tests
+
+The initial test suite should cover at least:
+
+1. Valid feed → articles inserted.
+2. Re-running the same feed → no duplicate articles.
+3. Missing title → item rejected.
+4. Missing URL → item rejected.
+5. Missing optional fields → article can still be inserted.
+6. Malformed feed → ingestion fails clearly.
+
+The existing `(source_id, url)` uniqueness constraint should be used as the initial duplicate-insertion safeguard.
+
+The behavior of updating already stored article fields is intentionally outside the initial baseline until a demonstrated requirement exists.
 
 ---
 
 ## 4. Next Development Stages
 
-### Stage 1 — Database Canonicalization
-
-Goal:
-
-Make the PostgreSQL schema represented in the repository the canonical reproducible definition of the tested database structure.
-
-Exit criteria:
-
-* schema can be recreated from repository SQL,
-* views can be recreated from repository SQL,
-* documented model matches actual database structure,
-* no undocumented tables or columns are introduced.
-
----
-
-### Stage 2 — Reproducible Test Data
-
-Goal:
-
-Create controlled test cases representing important system situations.
-
-Initial cases should include:
-
-* one article and one story,
-* multiple articles covering one story,
-* duplicate or near-duplicate articles,
-* multiple articles based on the same evidence,
-* genuinely different evidence,
-* supporting evidence,
-* contradicting evidence,
-* insufficient evidence,
-* historical assessment changes.
-
-Synthetic data must remain clearly identified as synthetic.
-
-Exit criteria:
-
-The important provenance and assessment rules can be tested repeatedly without manually reconstructing the database state.
-
----
-
-### Stage 3 — Baseline Ingestion
+### Stage 1 — Baseline Ingestion
 
 Goal:
 
@@ -169,8 +226,9 @@ Create the first deterministic article-ingestion pipeline.
 Initial responsibilities:
 
 * read configured feeds,
-* retrieve article metadata,
+* parse feed items,
 * normalize article data,
+* validate required fields,
 * store articles,
 * prevent duplicate insertion,
 * record discovery information.
@@ -179,11 +237,16 @@ The first implementation should prioritize correctness and traceability over sca
 
 Exit criteria:
 
-A configured feed can be processed repeatedly without creating uncontrolled duplicate articles.
+* a controlled feed can be processed successfully,
+* valid articles are stored correctly,
+* invalid required fields are handled predictably,
+* the same feed can be processed repeatedly without creating uncontrolled duplicate articles,
+* the behavior is covered by automated tests,
+* the implementation and limitations are documented.
 
 ---
 
-### Stage 4 — Deduplication
+### Stage 2 — Deduplication
 
 Goal:
 
@@ -209,7 +272,7 @@ Known duplicate scenarios are handled predictably and can be tested automaticall
 
 ---
 
-### Stage 5 — Story Matching
+### Stage 3 — Story Matching
 
 Goal:
 
@@ -233,7 +296,7 @@ Known matching and non-matching cases produce reproducible results, including ex
 
 ---
 
-### Stage 6 — Claim and Evidence Pipeline
+### Stage 4 — Claim and Evidence Pipeline
 
 Goal:
 
@@ -268,7 +331,7 @@ A claim can be traced through its supporting and contradicting evidence back to 
 
 ---
 
-### Stage 7 — Assessment Workflow
+### Stage 5 — Assessment Workflow
 
 Goal:
 
@@ -297,7 +360,7 @@ Every assessment can be identified by:
 
 ---
 
-### Stage 8 — AI-Assisted Processing
+### Stage 6 — AI-Assisted Processing
 
 AI should be introduced only after deterministic baselines exist.
 
@@ -320,7 +383,7 @@ AI-assisted processing can be compared with deterministic and/or human-reviewed 
 
 ---
 
-### Stage 9 — Automation
+### Stage 7 — Automation
 
 Goal:
 
@@ -352,7 +415,7 @@ Automation should be introduced gradually rather than building the entire pipeli
 
 ---
 
-### Stage 10 — User Interface
+### Stage 8 — User Interface
 
 A UI will be developed only after the underlying data and processing model are sufficiently stable.
 
@@ -393,6 +456,8 @@ The following are intentionally not considered implemented:
 
 These may be developed later.
 
+The current Baseline Ingestion stage is an implementation milestone, not yet a production ingestion system.
+
 ---
 
 ## 6. Development Order
@@ -406,7 +471,7 @@ Canonical SQL
         ↓
 Reproducible Tests
         ↓
-Ingestion
+Baseline Ingestion
         ↓
 Deduplication
         ↓
@@ -484,6 +549,10 @@ Database expansion should therefore be driven by demonstrated requirements rathe
 
 The immediate priority is:
 
-**Canonicalize the validated database model inside the repository and make its recreation reproducible.**
+**Baseline Ingestion**
+
+The next concrete milestone is to establish a deterministic, reproducible article-ingestion path using a controlled feed fixture and automated tests.
 
 No AI integration, embeddings, autonomous agents, or UI work is required at this stage.
+
+The database schema is not expected to change unless implementation demonstrates a requirement that the current model cannot represent.
