@@ -140,78 +140,79 @@ The local `main` branch and `origin/main` are synchronized after this milestone.
 
 ## 3. Current Work
 
-The current implementation stage is:
+The current implementation milestone is:
 
 **Baseline Ingestion**
 
-The objective is to turn the validated data model into the smallest deterministic article-ingestion pipeline.
+The validated database model has now been connected to a small deterministic article-ingestion pipeline.
 
-The first implementation should establish a controlled and reproducible path from an input feed to stored `articles`.
+The current implementation provides:
 
-### Current responsibilities
+* RSS parsing;
+* article normalization;
+* required-field validation;
+* article insertion;
+* duplicate prevention through `(source_id, url)`;
+* controlled local RSS fixtures;
+* unit tests;
+* integration tests;
+* transaction-safe test execution.
 
-The baseline ingestion stage should:
+The implementation is intentionally limited.
 
-* read a configured feed,
-* parse feed items,
-* normalize basic article fields,
-* validate required fields,
-* associate articles with `source_id` and `feed_id`,
-* store valid articles,
-* prevent duplicate insertion,
-* preserve discovery information,
-* produce clear and testable results.
+It establishes the first reproducible path from a feed item to a stored article without introducing AI, embeddings, story matching, or other higher-level processing.
 
-The initial implementation should use a controlled local feed fixture before depending on external feeds.
-
-### Initial article fields
-
-Required:
-
-* `source_id`
-* `feed_id`
-* `title`
-* `url`
-
-Optional:
-
-* `author`
-* `published_at`
-* `language`
-* `content`
-
-Database-generated fields such as `discovered_at`, `created_at`, and `updated_at` remain under database control.
-
-### Baseline ingestion flow
+### Current ingestion flow
 
 ```text
-Feed
-  ↓
+RSS Feed
+   ↓
 Parse
-  ↓
-Normalize basic fields
-  ↓
-Validate required fields
-  ↓
-Insert article
+   ↓
+Normalize
+   ↓
+Validate
+   ↓
+Insert Article
 ```
 
-The ingestion stage does not perform story matching, claim extraction, evidence extraction, or assessment.
+### Current test status
 
-### Baseline ingestion tests
+The baseline ingestion implementation currently has:
 
-The initial test suite should cover at least:
+```text
+9 unit tests        → passing
+6 integration tests → passing
+```
 
-1. Valid feed → articles inserted.
-2. Re-running the same feed → no duplicate articles.
-3. Missing title → item rejected.
-4. Missing URL → item rejected.
-5. Missing optional fields → article can still be inserted.
-6. Malformed feed → ingestion fails clearly.
+The integration suite verifies:
 
-The existing `(source_id, url)` uniqueness constraint should be used as the initial duplicate-insertion safeguard.
+1. valid article insertion;
+2. duplicate article handling;
+3. valid feed ingestion;
+4. repeated feed ingestion without duplicates;
+5. rejection of missing required fields;
+6. failure on malformed feeds.
 
-The behavior of updating already stored article fields is intentionally outside the initial baseline until a demonstrated requirement exists.
+The integration tests use the separate `news_test` database and roll back their database changes after each test.
+
+### Current limitations
+
+The baseline ingestion implementation does not yet provide:
+
+* production feed discovery;
+* feed scheduling;
+* retry and network-failure handling;
+* advanced deduplication;
+* article content extraction;
+* story matching;
+* claim extraction;
+* evidence extraction;
+* provenance discovery;
+* assessment automation;
+* LLM or embedding processing.
+
+These remain future stages.
 
 ---
 
@@ -219,38 +220,54 @@ The behavior of updating already stored article fields is intentionally outside 
 
 ### Stage 1 — Baseline Ingestion
 
+**Status: Implemented and validated**
+
 Goal:
 
 Create the first deterministic article-ingestion pipeline.
 
-Initial responsibilities:
+Implemented responsibilities:
 
-* read configured feeds,
-* parse feed items,
-* normalize article data,
-* validate required fields,
-* store articles,
-* prevent duplicate insertion,
-* record discovery information.
+* parse RSS feed items;
+* normalize basic article data;
+* validate required fields;
+* associate articles with `source_id` and `feed_id`;
+* store valid articles;
+* prevent duplicate insertion;
+* preserve database-generated discovery and creation information;
+* return clear ingestion results;
+* test the behavior using controlled local fixtures.
 
-The first implementation should prioritize correctness and traceability over scale.
+The current implementation uses a controlled local RSS fixture rather than depending on external feeds.
 
-Exit criteria:
+### Validation result
 
-* a controlled feed can be processed successfully,
-* valid articles are stored correctly,
-* invalid required fields are handled predictably,
-* the same feed can be processed repeatedly without creating uncontrolled duplicate articles,
-* the behavior is covered by automated tests,
-* the implementation and limitations are documented.
+The current implementation has passed:
+
+```text
+9 unit tests
+6 integration tests
+```
+
+The baseline behavior is therefore established and documented.
+
+The stage should remain considered complete at the current scope.
+
+Future requirements discovered during production-oriented work may require revisiting this stage, but such changes should be driven by demonstrated requirements rather than speculation.
 
 ---
 
 ### Stage 2 — Deduplication
 
+**Status: Next stage**
+
 Goal:
 
 Identify when incoming articles are duplicates or near-duplicates of previously stored material.
+
+The current `(source_id, url)` uniqueness constraint remains the baseline duplicate-insertion safeguard.
+
+The next stage concerns broader duplicate detection beyond that database constraint.
 
 Initial approach:
 
@@ -258,10 +275,10 @@ Use deterministic signals before introducing embeddings or LLM-based matching.
 
 Possible signals include:
 
-* canonical URL,
-* normalized title,
-* content hash,
-* publication metadata,
+* canonical URL;
+* normalized title;
+* content hash;
+* publication metadata;
 * textual similarity.
 
 The exact algorithm should be documented and tested before becoming production logic.
@@ -273,6 +290,8 @@ Known duplicate scenarios are handled predictably and can be tested automaticall
 ---
 
 ### Stage 3 — Story Matching
+
+**Status: Not started**
 
 Goal:
 
@@ -298,6 +317,8 @@ Known matching and non-matching cases produce reproducible results, including ex
 
 ### Stage 4 — Claim and Evidence Pipeline
 
+**Status: Not started**
+
 Goal:
 
 Connect articles to claims and evidence while preserving provenance.
@@ -320,9 +341,9 @@ Assessment
 
 The implementation must preserve the distinction between:
 
-* what an article reports,
-* what evidence exists,
-* what evidence supports or contradicts a claim,
+* what an article reports;
+* what evidence exists;
+* what evidence supports or contradicts a claim;
 * and what an assessment concludes.
 
 Exit criteria:
@@ -333,16 +354,18 @@ A claim can be traced through its supporting and contradicting evidence back to 
 
 ### Stage 5 — Assessment Workflow
 
+**Status: Not started**
+
 Goal:
 
 Implement a reviewable assessment process.
 
 The system should support:
 
-* human assessment,
-* rule-based assessment,
-* AI proposals,
-* human review,
+* human assessment;
+* rule-based assessment;
+* AI proposals;
+* human review;
 * historical assessment records.
 
 AI-generated assessments must not silently replace historical decisions.
@@ -351,26 +374,28 @@ Exit criteria:
 
 Every assessment can be identified by:
 
-* actor type,
-* actor name when applicable,
-* assessment role,
-* status,
-* reasoning,
+* actor type;
+* actor name when applicable;
+* assessment role;
+* status;
+* reasoning;
 * creation time.
 
 ---
 
 ### Stage 6 — AI-Assisted Processing
 
+**Status: Not started**
+
 AI should be introduced only after deterministic baselines exist.
 
 Potential uses:
 
-* claim extraction,
-* article/story matching,
-* evidence identification,
-* summarization,
-* classification,
+* claim extraction;
+* article/story matching;
+* evidence identification;
+* summarization;
+* classification;
 * assessment proposals.
 
 AI output must remain distinguishable from verified source material.
@@ -384,6 +409,8 @@ AI-assisted processing can be compared with deterministic and/or human-reviewed 
 ---
 
 ### Stage 7 — Automation
+
+**Status: Not started**
 
 Goal:
 
@@ -417,19 +444,21 @@ Automation should be introduced gradually rather than building the entire pipeli
 
 ### Stage 8 — User Interface
 
+**Status: Not started**
+
 A UI will be developed only after the underlying data and processing model are sufficiently stable.
 
 The UI should expose the evidence trail rather than hide it.
 
 Potential views include:
 
-* stories,
-* articles,
-* claims,
-* evidence,
-* provenance,
-* conflicting evidence,
-* assessment history,
+* stories;
+* articles;
+* claims;
+* evidence;
+* provenance;
+* conflicting evidence;
+* assessment history;
 * source information.
 
 The UI should not imply certainty that the underlying data does not support.
@@ -440,118 +469,33 @@ The UI should not imply certainty that the underlying data does not support.
 
 The following are intentionally not considered implemented:
 
-* production feed ingestion,
-* production deduplication,
-* production story matching,
-* production claim extraction,
-* production evidence extraction,
-* automated assessment,
-* LLM integration,
-* embeddings,
-* vector search,
-* autonomous agents,
-* scheduled processing,
-* production web interface,
+* production feed ingestion;
+* production deduplication;
+* production story matching;
+* production claim extraction;
+* production evidence extraction;
+* automated assessment;
+* LLM integration;
+* embeddings;
+* vector search;
+* autonomous agents;
+* scheduled processing;
+* production web interface;
 * large-scale deployment.
 
-These may be developed later.
-
-The current Baseline Ingestion stage is an implementation milestone, not yet a production ingestion system.
-
----
-
-## 6. Development Order
-
-The project should generally progress in this order:
-
-```text
-Validated Database Model
-        ↓
-Canonical SQL
-        ↓
-Reproducible Tests
-        ↓
-Baseline Ingestion
-        ↓
-Deduplication
-        ↓
-Story Matching
-        ↓
-Claims
-        ↓
-Evidence
-        ↓
-Provenance
-        ↓
-Assessment
-        ↓
-AI Assistance
-        ↓
-Automation
-        ↓
-Interface
-```
-
-This order is not absolute, but changes to it should be justified and documented.
-
----
-
-## 7. Milestone Principle
-
-A stage is considered complete only when its behavior can be demonstrated and tested.
-
-A feature is not considered complete merely because:
-
-* code exists,
-* an AI agent generated it,
-* a database column was added,
-* or a prototype appeared to work once.
-
-The project should prefer:
-
-```text
-small implementation
-        ↓
-test
-        ↓
-observe failure
-        ↓
-adjust
-        ↓
-document
-        ↓
-commit
-```
-
-over large speculative implementations.
-
----
-
-## 8. Architectural Stability Rule
-
-The roadmap does not authorize future stages to redesign the architecture automatically.
-
-If implementation reveals that the current model cannot represent a real requirement:
-
-1. document the limitation,
-2. demonstrate the requirement,
-3. determine whether the existing model can represent it,
-4. consider the smallest appropriate change,
-5. record the architectural decision,
-6. update the affected documentation,
-7. then implement the change.
-
-Database expansion should therefore be driven by demonstrated requirements rather than anticipated possibilities.
+The current Baseline Ingestion implementation is a tested development milestone, not yet a production ingestion system.
 
 ---
 
 ## 9. Current Priority
 
-The immediate priority is:
+The immediate priority is now:
 
-**Baseline Ingestion**
+**Deduplication**
 
-The next concrete milestone is to establish a deterministic, reproducible article-ingestion path using a controlled feed fixture and automated tests.
+Baseline Ingestion has reached its current implementation and validation milestone.
+
+The next work should therefore investigate deterministic duplicate detection beyond the existing `(source_id, url)` database constraint.
 
 No AI integration, embeddings, autonomous agents, or UI work is required at this stage.
 

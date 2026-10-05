@@ -511,6 +511,197 @@ Those questions remain future engineering and validation tasks.
 
 ---
 
+# Baseline Ingestion Tests
+
+The repository now contains an initial deterministic article-ingestion pipeline.
+
+The current pipeline is:
+
+```text
+RSS Feed
+   ↓
+Parse
+   ↓
+Normalize
+   ↓
+Validate
+   ↓
+Insert Article
+```
+
+The implementation is intentionally limited to baseline ingestion.
+
+It does not perform story matching, claim extraction, evidence extraction, provenance discovery, assessment, LLM processing, or embeddings.
+
+## Test Environment
+
+Integration tests use the separate PostgreSQL database:
+
+```text
+news_test
+```
+
+The production `news` database is not used by the ingestion integration tests.
+
+Each integration test runs inside a transaction and rolls back its changes after completion. This prevents test records from remaining in the database.
+
+The RSS fixtures are controlled local synthetic files stored under:
+
+```text
+tests/fixtures/feeds/
+```
+
+## Unit Tests
+
+The current unit test suite contains:
+
+```text
+9 tests
+```
+
+All tests are passing.
+
+The unit tests cover:
+
+* RSS item parsing;
+* required and optional article validation;
+* article field normalization;
+* publication-date normalization;
+* handling of missing optional fields.
+
+## Integration Tests
+
+The current integration test suite contains:
+
+```text
+6 tests
+```
+
+All tests are passing.
+
+The integration tests cover:
+
+### 1. Article insertion
+
+A valid article is inserted with its required and optional fields.
+
+The test verifies that the stored database values match the supplied article data.
+
+### 2. Duplicate article handling
+
+The same `(source_id, url)` combination is inserted more than once.
+
+The first insertion succeeds.
+
+A subsequent insertion is ignored.
+
+The test also attempts to insert changed article metadata using the same `(source_id, url)` and verifies that the original stored values remain unchanged.
+
+This confirms the current baseline behavior:
+
+```text
+first insertion → insert
+
+same source + same URL → skip
+
+existing article → do not silently update
+```
+
+### 3. Baseline feed ingestion
+
+The controlled RSS fixture contains three valid articles.
+
+The ingestion pipeline is expected to produce:
+
+```text
+parsed   = 3
+inserted = 3
+skipped  = 0
+rejected = 0
+```
+
+The database is then checked to confirm that three articles were stored for the test feed.
+
+### 4. Repeated feed ingestion
+
+The same controlled feed is processed twice.
+
+The first run inserts all three articles.
+
+The second run produces:
+
+```text
+parsed   = 3
+inserted = 0
+skipped  = 3
+rejected = 0
+```
+
+The database still contains exactly three articles for the test feed.
+
+### 5. Invalid articles
+
+A controlled invalid fixture contains:
+
+* one article without a title;
+* one article without a URL.
+
+Both items are rejected before insertion.
+
+The test verifies that:
+
+```text
+parsed   = 2
+inserted = 0
+skipped  = 0
+rejected = 2
+```
+
+The database contains no articles for the invalid feed.
+
+### 6. Malformed feed
+
+A deliberately malformed XML feed is processed.
+
+The parser fails before article insertion.
+
+The test verifies that no article is stored for the malformed feed.
+
+## Current Baseline Test Result
+
+The current ingestion implementation has therefore been validated through:
+
+```text
+9 unit tests       → passing
+6 integration tests → passing
+```
+
+The tests establish the behavior of the current deterministic ingestion baseline.
+
+They do not establish that the ingestion system is production-ready for arbitrary external feeds, large-scale processing, unreliable networks, feed-specific extensions, or changing publisher formats.
+
+## Current Ingestion Limitations
+
+The baseline intentionally does not yet provide:
+
+* production feed discovery;
+* feed scheduling;
+* retry policies;
+* network failure handling;
+* feed-specific normalization beyond the current RSS fixture;
+* advanced duplicate detection;
+* article content extraction;
+* article updating;
+* story matching;
+* claim extraction;
+* evidence extraction;
+* provenance discovery;
+* automated assessment.
+
+These belong to later development stages unless a demonstrated requirement changes the roadmap.
+
+---
+
 # 15. Future Testing
 
 Future tests should cover at least:
