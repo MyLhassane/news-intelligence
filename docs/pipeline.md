@@ -82,6 +82,16 @@ Possible signals include:
 
 The initial implementation should prefer deterministic signals.
 
+### Current implementation status
+
+Title normalization is implemented as a separate deterministic utility.
+
+It applies Unicode case folding, trims surrounding whitespace, and collapses
+consecutive whitespace. Punctuation is preserved, and empty titles are rejected.
+
+The normalized title is not yet used to reject, merge, or classify articles.
+Title equality alone is not sufficient to establish that two articles are duplicates.
+
 ### Important distinction
 
 Deduplication is not the same as story matching.
