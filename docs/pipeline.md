@@ -92,6 +92,17 @@ consecutive whitespace. Punctuation is preserved, and empty titles are rejected.
 The normalized title is not yet used to reject, merge, or classify articles.
 Title equality alone is not sufficient to establish that two articles are duplicates.
 
+URL normalization is implemented as a separate deterministic utility.
+
+It lowercases the URL scheme and hostname, removes default HTTP/HTTPS ports,
+removes known tracking parameters, preserves other query parameters and their
+original representation, and removes fragments.
+
+URLs containing credentials and URLs that do not use HTTP or HTTPS are rejected.
+
+This utility is not yet connected to article ingestion or duplicate classification.
+A normalized URL is a comparison signal, not proof that two articles are duplicates.
+
 ### Important distinction
 
 Deduplication is not the same as story matching.
