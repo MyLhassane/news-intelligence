@@ -176,6 +176,173 @@ class TestArticleIngestion(unittest.TestCase):
             finally:
                 conn.rollback()
 
+    def test_same_content_with_different_urls_is_allowed(self):
+        with psycopg.connect(DATABASE_URL) as conn:
+            conn.autocommit = False
+
+            try:
+                article = {
+                    "title": "Identical Content Test Article",
+                    "author": "Test Author",
+                    "published_at": None,
+                    "language": "en",
+                    "content": "Identical article content for deduplication testing.",
+                    "summary": "Identical summary",
+                }
+
+                first_insert = insert_article(
+                    conn,
+                    source_id=1,
+                    feed_id=None,
+                    article={
+                        **article,
+                        "url": "https://example.org/content-copy-a",
+                    },
+                )
+
+                second_insert = insert_article(
+                    conn,
+                    source_id=1,
+                    feed_id=None,
+                    article={
+                        **article,
+                        "url": "https://example.org/content-copy-b",
+                    },
+                )
+
+                self.assertTrue(first_insert)
+                self.assertTrue(second_insert)
+
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM articles
+                        WHERE source_id = 1
+                          AND url IN (
+                              'https://example.org/content-copy-a',
+                              'https://example.org/content-copy-b'
+                          )
+                        """,
+                    )
+
+                    count = cur.fetchone()[0]
+
+                self.assertEqual(count, 2)
+
+            finally:
+                conn.rollback()
+
+    def test_same_title_with_different_content_is_allowed(self):
+        with psycopg.connect(DATABASE_URL) as conn:
+            conn.autocommit = False
+
+            try:
+                base_article = {
+                    "title": "Breaking News: Test Event",
+                    "author": "Test Author",
+                    "published_at": None,
+                    "language": "en",
+                    "summary": None,
+                }
+
+                first_insert = insert_article(
+                    conn,
+                    source_id=1,
+                    feed_id=None,
+                    article={
+                        **base_article,
+                        "url": "https://example.org/event-report-a",
+                        "content": "The first report describes event A.",
+                    },
+                )
+
+                second_insert = insert_article(
+                    conn,
+                    source_id=1,
+                    feed_id=None,
+                    article={
+                        **base_article,
+                        "url": "https://example.org/event-report-b",
+                        "content": "The second report describes a different event.",
+                    },
+                )
+
+                self.assertTrue(first_insert)
+                self.assertTrue(second_insert)
+
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM articles
+                        WHERE source_id = 1
+                          AND title = %s
+                          AND url IN (
+                              'https://example.org/event-report-a',
+                              'https://example.org/event-report-b'
+                          )
+                        """,
+                        (base_article["title"],),
+                    )
+
+                    count = cur.fetchone()[0]
+
+                self.assertEqual(count, 2)
+
+            finally:
+                conn.rollback()
+
+    def test_same_url_from_different_sources_is_allowed(self):
+        with psycopg.connect(DATABASE_URL) as conn:
+            conn.autocommit = False
+
+            try:
+                article = {
+                    "title": "Shared URL Test Article",
+                    "url": "https://example.org/shared-url-test",
+                    "author": None,
+                    "published_at": None,
+                    "language": "en",
+                    "content": None,
+                    "summary": None,
+                }
+
+                first_insert = insert_article(
+                    conn,
+                    source_id=1,
+                    feed_id=None,
+                    article=article,
+                )
+
+                second_insert = insert_article(
+                    conn,
+                    source_id=2,
+                    feed_id=None,
+                    article=article,
+                )
+
+                self.assertTrue(first_insert)
+                self.assertTrue(second_insert)
+
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM articles
+                        WHERE url = %s
+                          AND source_id IN (1, 2)
+                        """,
+                        (article["url"],),
+                    )
+
+                    count = cur.fetchone()[0]
+
+                self.assertEqual(count, 2)
+
+            finally:
+                conn.rollback()
+
     def test_baseline_feed_ingestion(self):
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
