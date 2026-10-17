@@ -128,25 +128,30 @@ Created:
 
 ### Current Repository Milestone
 
-The completed reproducibility and provenance milestone was committed as:
+The latest inspected commit is:
 
 ```text
-7c8883f Document database reproducibility and provenance tests
+f5a27cd Add deterministic URL normalization
 ```
 
-The local `main` branch and `origin/main` are synchronized after this milestone.
+Since the baseline ingestion milestone, the repository has added deterministic
+title and URL normalization utilities and integration tests for duplicate
+article behavior. The `main` branch was synchronized with `origin/main` before
+this roadmap update. The current roadmap changes are local and uncommitted.
 
 ---
 
 ## 3. Current Work
 
-The current implementation milestone is:
+The current implementation stage is:
 
-**Baseline Ingestion**
+**Deduplication**
 
-The validated database model has now been connected to a small deterministic article-ingestion pipeline.
+Baseline Ingestion is implemented and remains the foundation for this work.
+The current deduplication work adds deterministic normalization utilities and
+tests while preserving the existing `(source_id, url)` insertion safeguard.
 
-The current implementation provides:
+The ingestion foundation provides:
 
 * RSS parsing;
 * article normalization;
@@ -158,9 +163,15 @@ The current implementation provides:
 * integration tests;
 * transaction-safe test execution.
 
-The implementation is intentionally limited.
+The deduplication work currently provides:
 
-It establishes the first reproducible path from a feed item to a stored article without introducing AI, embeddings, story matching, or other higher-level processing.
+* deterministic title normalization;
+* deterministic URL normalization;
+* tests for duplicate article behavior.
+
+These utilities are not yet connected to ingestion or duplicate
+classification. Normalized values are comparison signals, not proof that two
+articles are duplicates.
 
 ### Current ingestion flow
 
@@ -176,16 +187,22 @@ Validate
 Insert Article
 ```
 
-### Current test status
+### Test inventory
 
-The baseline ingestion implementation currently has:
+The repository currently contains the following test methods, counted
+statically without running the test suite:
 
 ```text
-9 unit tests        → passing
-6 integration tests → passing
+27 unit test methods
+9 integration test methods
 ```
 
-The integration suite verifies:
+The original Baseline Ingestion validation recorded 9 passing unit tests and 6
+passing integration tests. Those are historical results and predate the later
+normalization and duplicate-behavior tests; the pass status of the current
+suite has not been revalidated here.
+
+The integration suite includes coverage for:
 
 1. valid article insertion;
 2. duplicate article handling;
@@ -240,16 +257,17 @@ Implemented responsibilities:
 
 The current implementation uses a controlled local RSS fixture rather than depending on external feeds.
 
-### Validation result
+### Historical validation result
 
-The current implementation has passed:
+When Baseline Ingestion was validated, the recorded result was:
 
 ```text
-9 unit tests
-6 integration tests
+9 unit tests passed
+6 integration tests passed
 ```
 
-The baseline behavior is therefore established and documented.
+These historical counts predate subsequent tests added for title and URL
+normalization and duplicate article behavior.
 
 The stage should remain considered complete at the current scope.
 
@@ -259,7 +277,7 @@ Future requirements discovered during production-oriented work may require revis
 
 ### Stage 2 — Deduplication
 
-**Status: Next stage**
+**Status: In progress**
 
 Goal:
 
@@ -267,7 +285,10 @@ Identify when incoming articles are duplicates or near-duplicates of previously 
 
 The current `(source_id, url)` uniqueness constraint remains the baseline duplicate-insertion safeguard.
 
-The next stage concerns broader duplicate detection beyond that database constraint.
+The current work has added deterministic title and URL normalization utilities
+and tests for duplicate article behavior. The normalization utilities are not
+yet used by ingestion or duplicate classification. This stage concerns broader
+duplicate detection beyond the existing database constraint.
 
 Initial approach:
 

@@ -2,19 +2,44 @@ import unittest
 from pathlib import Path
 
 import psycopg
+from psycopg import conninfo
 
 from news_intelligence.article_ingestion import insert_article
 from news_intelligence.baseline_ingestion import ingest_feed
 
 
 DATABASE_URL = "dbname=news_test user=hassan"
+ALLOWED_DATABASE_NAMES = {"news_test"}
+
+
+def require_test_database(database_url: str) -> None:
+    parsed = conninfo.conninfo_to_dict(database_url)
+    dbname = parsed.get("dbname")
+    if dbname not in ALLOWED_DATABASE_NAMES:
+        raise AssertionError(
+            f"Integration tests must not run against database '{dbname}'. "
+            f"Only {sorted(ALLOWED_DATABASE_NAMES)} is permitted."
+        )
+
+
+def require_connected_database_is_test(conn) -> None:
+    actual_dbname = conn.info.dbname
+    if actual_dbname not in ALLOWED_DATABASE_NAMES:
+        raise AssertionError(
+            f"Connected database '{actual_dbname}' is not permitted. "
+            f"Only {sorted(ALLOWED_DATABASE_NAMES)} is permitted."
+        )
+
+
 FIXTURE = Path("tests/fixtures/feeds/baseline.xml")
 
 
 class TestArticleIngestion(unittest.TestCase):
     def test_insert_article(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 with conn.cursor() as cur:
@@ -92,8 +117,10 @@ class TestArticleIngestion(unittest.TestCase):
                 conn.rollback()
 
     def test_duplicate_article_is_ignored(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 with conn.cursor() as cur:
@@ -177,8 +204,10 @@ class TestArticleIngestion(unittest.TestCase):
                 conn.rollback()
 
     def test_same_content_with_different_urls_is_allowed(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 article = {
@@ -234,8 +263,10 @@ class TestArticleIngestion(unittest.TestCase):
                 conn.rollback()
 
     def test_same_title_with_different_content_is_allowed(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 base_article = {
@@ -294,8 +325,10 @@ class TestArticleIngestion(unittest.TestCase):
                 conn.rollback()
 
     def test_same_url_from_different_sources_is_allowed(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 article = {
@@ -344,8 +377,10 @@ class TestArticleIngestion(unittest.TestCase):
                 conn.rollback()
 
     def test_baseline_feed_ingestion(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 with conn.cursor() as cur:
@@ -402,8 +437,10 @@ class TestArticleIngestion(unittest.TestCase):
                 conn.rollback()
 
     def test_baseline_feed_rerun_skips_existing_articles(self):
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 with conn.cursor() as cur:
@@ -474,8 +511,10 @@ class TestArticleIngestion(unittest.TestCase):
     def test_invalid_articles_are_rejected(self):
         invalid_fixture = Path("tests/fixtures/feeds/invalid.xml")
 
+        require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:
             conn.autocommit = False
+            require_connected_database_is_test(conn)
 
             try:
                 with conn.cursor() as cur:
@@ -547,8 +586,10 @@ class TestArticleIngestion(unittest.TestCase):
         )
 
         try:
+            require_test_database(DATABASE_URL)
             with psycopg.connect(DATABASE_URL) as conn:
                 conn.autocommit = False
+                require_connected_database_is_test(conn)
 
                 try:
                     with conn.cursor() as cur:
@@ -601,6 +642,48 @@ class TestArticleIngestion(unittest.TestCase):
 
         finally:
             malformed_fixture.unlink(missing_ok=True)
+
+
+class FakeConnectionInfo:
+    def __init__(self, dbname: str):
+        self.dbname = dbname
+
+
+class FakeConnection:
+    def __init__(self, dbname: str):
+        self.info = FakeConnectionInfo(dbname)
+
+
+class TestDatabaseSafeguard(unittest.TestCase):
+    def test_safeguard_rejects_production_database_name(self):
+        production_url = "dbname=news user=hassan"
+        with self.assertRaises(AssertionError) as context:
+            require_test_database(production_url)
+
+        self.assertIn("news", str(context.exception))
+        self.assertIn("news_test", str(context.exception))
+
+    def test_safeguard_rejects_arbitrary_non_test_database(self):
+        arbitrary_url = "dbname=some_other_db user=hassan"
+        with self.assertRaises(AssertionError):
+            require_test_database(arbitrary_url)
+
+    def test_safeguard_allows_news_test_database(self):
+        require_test_database(DATABASE_URL)
+
+    def test_connected_safeguard_rejects_production_database(self):
+        with self.assertRaises(AssertionError) as context:
+            require_connected_database_is_test(FakeConnection("news"))
+
+        self.assertIn("news", str(context.exception))
+        self.assertIn("news_test", str(context.exception))
+
+    def test_connected_safeguard_rejects_arbitrary_non_test_database(self):
+        with self.assertRaises(AssertionError):
+            require_connected_database_is_test(FakeConnection("some_other_db"))
+
+    def test_connected_safeguard_allows_news_test_database(self):
+        require_connected_database_is_test(FakeConnection("news_test"))
 
 
 if __name__ == "__main__":

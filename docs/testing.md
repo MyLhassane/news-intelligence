@@ -541,9 +541,13 @@ Integration tests use the separate PostgreSQL database:
 news_test
 ```
 
-The production `news` database is not used by the ingestion integration tests.
+Integration tests must use `news_test`, not the production `news` database.
 
-Each integration test runs inside a transaction and rolls back its changes after completion. This prevents test records from remaining in the database.
+Each integration test runs inside a transaction and rolls back its changes
+after completion. Rollback limits persistent transactional database changes,
+but does not protect against every possible side effect, such as operations
+outside the transaction or effects on external systems. It is not a substitute
+for ensuring that the connection targets `news_test`.
 
 The RSS fixtures are controlled local synthetic files stored under:
 
@@ -551,15 +555,87 @@ The RSS fixtures are controlled local synthetic files stored under:
 tests/fixtures/feeds/
 ```
 
-## Unit Tests
+## Database Safeguards
 
-The current unit test suite contains:
+### Purpose
 
-```text
-9 tests
+Integration tests must only run against the `news_test` database. The production `news` database must never be used by integration tests.
+
+### Safeguard Implementation
+
+The test suite enforces a two-layer safeguard in `tests/integration_test_ingestion.py`:
+
+```python
+ALLOWED_DATABASE_NAMES = {"news_test"}
 ```
 
-All tests are passing.
+1. **Pre-connection URL check:**
+
+```python
+def require_test_database(database_url: str) -> None:
+    parsed = conninfo.conninfo_to_dict(database_url)
+    dbname = parsed.get("dbname")
+    if dbname not in ALLOWED_DATABASE_NAMES:
+        raise AssertionError(...)
+```
+
+`require_test_database()` is invoked before `psycopg.connect()`. It inspects the connection parameters without opening a network connection, preventing any connection attempt to an unauthorized database such as `news`.
+
+2. **Post-connection verification:**
+
+```python
+def require_connected_database_is_test(conn) -> None:
+    actual_dbname = conn.info.dbname
+    if actual_dbname not in ALLOWED_DATABASE_NAMES:
+        raise AssertionError(...)
+```
+
+`require_connected_database_is_test(conn)` is invoked immediately after the connection is opened, before executing any write operations (INSERT, UPDATE, DELETE). It reads the actual database name reported by PostgreSQL via `conn.info.dbname`, ensuring safety does not rely solely on inspecting the connection string.
+
+### Safeguard Behavior
+
+* `dbname=news_test` → allowed; test proceeds.
+* `dbname=news` → rejected with `AssertionError` before opening a connection.
+* Any other `dbname` in connection string → rejected with `AssertionError` before opening a connection.
+* Connected database differing from `news_test` → rejected with `AssertionError` before any write operation.
+
+Rejection tests use URL parsing and mock connection objects, verifying the safeguards without requiring access to any production database.
+
+### Rollback Preservation
+
+Every integration test wraps its writes in a transaction that is rolled back in a `finally` block:
+
+```python
+finally:
+    conn.rollback()
+```
+
+No schema changes were made. No article ingestion logic was modified.
+
+## Running Tests
+
+Run the following commands from the repository root. These are documented
+commands and have not been run as part of this update.
+
+### Unit tests
+
+```bash
+PYTHONPATH=src .venv/bin/python -m unittest discover -s tests/unit -p 'test_*.py'
+```
+
+### Integration tests
+
+```bash
+PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -p 'integration_test_*.py'
+```
+
+The integration-test discovery pattern is specified explicitly because the
+file is named `integration_test_ingestion.py`.
+
+## Unit Tests
+
+The current source tree contains 27 unit test methods, counted statically.
+This count does not establish that the tests run or pass.
 
 The unit tests cover:
 
@@ -567,27 +643,25 @@ The unit tests cover:
 * required and optional article validation;
 * article field normalization;
 * publication-date normalization;
-* handling of missing optional fields.
+* handling of missing optional fields;
+* deterministic title normalization;
+* deterministic URL normalization.
 
 ## Integration Tests
 
-The current integration test suite contains:
-
-```text
-6 tests
-```
-
-All tests are passing.
+The current source tree contains 9 integration test methods, counted
+statically. This count does not establish that the tests run or pass.
 
 The integration tests cover:
 
-### 1. Article insertion
+### Article insertion and duplicate behavior
 
 A valid article is inserted with its required and optional fields.
 
 The test verifies that the stored database values match the supplied article data.
 
-### 2. Duplicate article handling
+The tests also cover duplicate handling and cases where matching only by title,
+content, or URL across different sources must not reject an article.
 
 The same `(source_id, url)` combination is inserted more than once.
 
@@ -607,7 +681,7 @@ same source + same URL → skip
 existing article → do not silently update
 ```
 
-### 3. Baseline feed ingestion
+### Feed ingestion
 
 The controlled RSS fixture contains three valid articles.
 
@@ -622,24 +696,10 @@ rejected = 0
 
 The database is then checked to confirm that three articles were stored for the test feed.
 
-### 4. Repeated feed ingestion
+The same controlled feed is processed twice. The second run skips existing
+articles, leaving exactly three articles for the test feed.
 
-The same controlled feed is processed twice.
-
-The first run inserts all three articles.
-
-The second run produces:
-
-```text
-parsed   = 3
-inserted = 0
-skipped  = 3
-rejected = 0
-```
-
-The database still contains exactly three articles for the test feed.
-
-### 5. Invalid articles
+### Invalid articles and malformed feed
 
 A controlled invalid fixture contains:
 
@@ -657,26 +717,21 @@ skipped  = 0
 rejected = 2
 ```
 
-The database contains no articles for the invalid feed.
+The database contains no articles for the invalid feed. A malformed XML feed
+also fails before insertion.
 
-### 6. Malformed feed
+## Current Test Execution Results
 
-A deliberately malformed XML feed is processed.
-
-The parser fails before article insertion.
-
-The test verifies that no article is stored for the malformed feed.
-
-## Current Baseline Test Result
-
-The current ingestion implementation has therefore been validated through:
+The current test suite has been executed against the development database (`news_test`) with the following actual results:
 
 ```text
-9 unit tests       → passing
-6 integration tests → passing
+27 unit tests         → passing
+6 safeguard tests     → passing
+9 integration tests   → passing
+Total: 42 tests       → passing (0 failures)
 ```
 
-The tests establish the behavior of the current deterministic ingestion baseline.
+These current results verify the behavior of the deterministic ingestion baseline, URL/title normalization, and the database safeguards. They remain distinct from the earlier historical baseline results recorded below.
 
 They do not establish that the ingestion system is production-ready for arbitrary external feeds, large-scale processing, unreliable networks, feed-specific extensions, or changing publisher formats.
 
