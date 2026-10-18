@@ -646,7 +646,8 @@ The current source tree contains unit test methods covering:
 * handling of missing optional fields;
 * deterministic title normalization;
 * deterministic URL normalization;
-* deterministic duplicate classification (`EXACT_DUPLICATE`, `NEAR_DUPLICATE`, `DISTINCT`).
+* deterministic duplicate classification (`EXACT_DUPLICATE`, `NEAR_DUPLICATE`, `DISTINCT`);
+* deterministic story-matching outcomes (`MATCH`, `NEW_STORY`, `REVIEW`).
 
 ## Integration Tests
 
@@ -743,6 +744,16 @@ baseline, URL/title normalization, and the database safeguards. They remain
 distinct from the earlier historical baseline results recorded below.
 
 They do not establish that the ingestion system is production-ready for arbitrary external feeds, large-scale processing, unreliable networks, feed-specific extensions, or changing publisher formats.
+
+The standalone story-matching utility's focused unit-test file was run
+separately:
+
+```text
+PYTHONPATH=src .venv/bin/python -m unittest tests/unit/test_story_matching.py
+Ran 5 tests — OK
+```
+
+This targeted result does not represent a run of the complete test suite.
 
 ## Current Ingestion Limitations
 

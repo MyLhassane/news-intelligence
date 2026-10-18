@@ -162,19 +162,15 @@ This state is important because uncertainty should be represented rather than hi
 
 ### Initial Baseline
 
-The first implementation should use deterministic or explainable signals where practical.
+A standalone deterministic token-overlap (Jaccard similarity over normalized titles) utility (`match_story`) has been implemented as an initial baseline. It supports three outcomes:
 
-Potential signals include:
+1. **`MATCH`**: The article sufficiently overlaps with an existing story above the confidence threshold, with clear separation from alternatives.
+2. **`NEW_STORY`**: The article has low similarity to all existing stories and represents a new event or topic.
+3. **`REVIEW`**: There is insufficient or ambiguous evidence for an automatic decision (e.g. partial title overlap below confidence threshold, or ambiguous close scores between top matching stories, or missing titles).
 
-* normalized title similarity;
-* named entities;
-* publication timing;
-* important keywords;
-* existing story metadata.
+The utility is not integrated into article ingestion or a persisted story workflow. It does not create or modify stories; uncertainty is represented in its result rather than forced into a match.
 
-Semantic embeddings and LLM-based matching may be introduced later.
-
-Any future AI matcher should be evaluated against the baseline.
+Semantic embeddings and LLM-based matching may be introduced later and evaluated against this deterministic baseline.
 
 ---
 
