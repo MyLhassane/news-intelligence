@@ -1,277 +1,39 @@
 # Project Roadmap
 
+This is the authoritative source for current project state, stage status,
+priority, and acceptance criteria. Pipeline behavior belongs in
+[`pipeline.md`](pipeline.md), schema details in
+[`database-schema.md`](database-schema.md), and test commands/results in
+[`testing.md`](testing.md). Do not copy those details here.
+
 ## 1. Current Project State
 
-The project has completed its initial architecture, data-model validation, database canonicalization, and reproducibility/provenance testing phases.
-
-The PostgreSQL model has been created and manually tested against:
-
-* real-world news and research material,
-* provenance relationships,
-* claim/evidence relationships,
-* conflicting evidence,
-* shared underlying sources,
-* independent evidence,
-* historical assessments,
-* and analytical database views.
-
-The repository now contains the canonical SQL representation of the validated database structure, reproducible synthetic test data, and documentation intended to preserve the project's architecture, decisions, testing history, and operating principles.
-
-The system is **not yet a production news-processing system**.
+The project is still in development and is not a production news-processing
+system. The active stage is the single stage marked **In progress** below.
+Verified test state is maintained in [`testing.md`](testing.md).
 
 ---
 
 ## 2. Completed
 
-### Database Model
-
-Completed and tested:
-
-* `sources`
-* `source_policies`
-* `source_feeds`
-* `articles`
-* `stories`
-* `article_stories`
-* `claims`
-* `claim_sources`
-* `evidence`
-* `claim_evidence`
-* `evidence_sources`
-* `claim_assessments`
-* `article_evidence`
-
-The model supports:
-
-* source classification,
-* article provenance,
-* story grouping,
-* claim extraction,
-* evidence tracking,
-* evidence provenance,
-* article-to-evidence relationships,
-* claim-to-evidence relationships,
-* historical assessments.
-
-### Validation
-
-Completed:
-
-* real LUX-ZEPLIN dark-matter example,
-* Reuters article validation,
-* Imperial College article validation,
-* research-paper evidence,
-* provenance tracking,
-* synthetic conflicting-evidence test,
-* synthetic shared-primary-source test,
-* synthetic independent-evidence test,
-* historical assessment test.
-
-### Database Views
-
-Created and tested:
-
-* `claim_intelligence`
-* `claim_overview`
-* `claim_evidence_conflicts`
-
-### Database Canonicalization
-
-Completed:
-
-* actual tested PostgreSQL schema extracted into `database/schema.sql`,
-* actual tested PostgreSQL views extracted into `database/views.sql`,
-* schema reconstruction tested in a separate `news_test` database,
-* all 13 expected tables recreated successfully,
-* all 3 expected views recreated successfully,
-* empty-database queries against the views completed without errors.
-
-The repository SQL files are derived from the validated PostgreSQL database rather than manually reconstructed.
-
-### Reproducible Test Data
-
-Completed:
-
-* synthetic test data added under `database/seeds/test_data.sql`,
-* article/story relationships tested,
-* claim/article relationships tested,
-* claim/evidence relationships tested,
-* supporting and contradicting evidence tested,
-* evidence provenance tested,
-* multiple articles referring to the same evidence tested,
-* historical assessment changes tested.
-
-The synthetic data is explicitly identified as synthetic and must not be treated as production or real-world evidence.
-
-The tests demonstrated that:
-
-* article count must not be treated as evidence count,
-* repeated reporting does not automatically establish independent confirmation,
-* provenance counts are descriptive and not independence or trust scores,
-* historical assessments can be preserved without overwriting earlier assessments.
-
-### Repository Foundation
-
-Created:
-
-* Git repository,
-* project structure,
-* `.gitignore`,
-* `README.md`,
-* `AGENTS.md`,
-* architecture documentation,
-* pipeline documentation,
-* database documentation,
-* testing documentation,
-* architectural decisions documentation,
-* roadmap documentation.
-
-### Current Repository Milestone
-
-The latest inspected commit is:
-
-```text
-f5a27cd Add deterministic URL normalization
-```
-
-Since the baseline ingestion milestone, the repository has added deterministic
-title and URL normalization utilities and integration tests for duplicate
-article behavior. The `main` branch was synchronized with `origin/main` before
-this roadmap update. The current roadmap changes are local and uncommitted.
+The database model and reproducible SQL foundation, provenance validation,
+synthetic test data, and baseline RSS ingestion are established. Their
+authoritative details are maintained in
+[`database-schema.md`](database-schema.md), [`pipeline.md`](pipeline.md),
+[`decisions.md`](decisions.md), and [`testing.md`](testing.md).
 
 ---
 
-## 3. Current Work
-
-The current implementation stage is:
-
-**Deduplication**
-
-Baseline Ingestion is implemented and remains the foundation for this work.
-The current deduplication work adds deterministic normalization utilities and
-tests while preserving the existing `(source_id, url)` insertion safeguard.
-
-The ingestion foundation provides:
-
-* RSS parsing;
-* article normalization;
-* required-field validation;
-* article insertion;
-* duplicate prevention through `(source_id, url)`;
-* controlled local RSS fixtures;
-* unit tests;
-* integration tests;
-* transaction-safe test execution.
-
-The deduplication work currently provides:
-
-* deterministic title normalization;
-* deterministic URL normalization;
-* tests for duplicate article behavior.
-
-These utilities are not yet connected to ingestion or duplicate
-classification. Normalized values are comparison signals, not proof that two
-articles are duplicates.
-
-### Current ingestion flow
-
-```text
-RSS Feed
-   ↓
-Parse
-   ↓
-Normalize
-   ↓
-Validate
-   ↓
-Insert Article
-```
-
-### Test inventory
-
-The repository currently contains the following test methods, counted
-statically without running the test suite:
-
-```text
-27 unit test methods
-9 integration test methods
-```
-
-The original Baseline Ingestion validation recorded 9 passing unit tests and 6
-passing integration tests. Those are historical results and predate the later
-normalization and duplicate-behavior tests; the pass status of the current
-suite has not been revalidated here.
-
-The integration suite includes coverage for:
-
-1. valid article insertion;
-2. duplicate article handling;
-3. valid feed ingestion;
-4. repeated feed ingestion without duplicates;
-5. rejection of missing required fields;
-6. failure on malformed feeds.
-
-The integration tests use the separate `news_test` database and roll back their database changes after each test.
-
-### Current limitations
-
-The baseline ingestion implementation does not yet provide:
-
-* production feed discovery;
-* feed scheduling;
-* retry and network-failure handling;
-* advanced deduplication;
-* article content extraction;
-* story matching;
-* claim extraction;
-* evidence extraction;
-* provenance discovery;
-* assessment automation;
-* LLM or embedding processing.
-
-These remain future stages.
-
----
-
-## 4. Next Development Stages
+## 3. Delivery Stages
 
 ### Stage 1 — Baseline Ingestion
 
-**Status: Implemented and validated**
+**Status: Complete at current scope**
 
-Goal:
-
-Create the first deterministic article-ingestion pipeline.
-
-Implemented responsibilities:
-
-* parse RSS feed items;
-* normalize basic article data;
-* validate required fields;
-* associate articles with `source_id` and `feed_id`;
-* store valid articles;
-* prevent duplicate insertion;
-* preserve database-generated discovery and creation information;
-* return clear ingestion results;
-* test the behavior using controlled local fixtures.
-
-The current implementation uses a controlled local RSS fixture rather than depending on external feeds.
-
-### Historical validation result
-
-When Baseline Ingestion was validated, the recorded result was:
-
-```text
-9 unit tests passed
-6 integration tests passed
-```
-
-These historical counts predate subsequent tests added for title and URL
-normalization and duplicate article behavior.
-
-The stage should remain considered complete at the current scope.
-
-Future requirements discovered during production-oriented work may require revisiting this stage, but such changes should be driven by demonstrated requirements rather than speculation.
+Its behavior and limitations are defined in [`pipeline.md`](pipeline.md);
+test procedures and observed outcomes are in [`testing.md`](testing.md).
+Reopen this stage only for a demonstrated requirement, not as a prerequisite
+to the active stage.
 
 ---
 
@@ -283,30 +45,36 @@ Goal:
 
 Identify when incoming articles are duplicates or near-duplicates of previously stored material.
 
-The current `(source_id, url)` uniqueness constraint remains the baseline duplicate-insertion safeguard.
+The current `(source_id, url)` uniqueness constraint remains the baseline
+duplicate-insertion safeguard.
 
-The current work has added deterministic title and URL normalization utilities
-and tests for duplicate article behavior. The normalization utilities are not
-yet used by ingestion or duplicate classification. This stage concerns broader
-duplicate detection beyond the existing database constraint.
+Existing signals, integration status, and behavior are documented in
+[`pipeline.md`](pipeline.md); test coverage/results are recorded in
+[`testing.md`](testing.md).
 
-Initial approach:
+### Next task
 
-Use deterministic signals before introducing embeddings or LLM-based matching.
+Define and implement the first deterministic duplicate-classification
+behavior using the existing normalization utilities. Keep this task separate
+from story matching, and do not merge or discard article records as a side
+effect.
 
-Possible signals include:
+Before changing implementation, specify through tests which URL variants are
+treated as equivalent, which title/content matches remain distinct, and how
+source boundaries affect a match. Preserve original article data and current
+`(source_id, url)` insertion behavior unless a demonstrated requirement and
+documented decision justify changing them.
 
-* canonical URL;
-* normalized title;
-* content hash;
-* publication metadata;
-* textual similarity.
+### Acceptance criteria
 
-The exact algorithm should be documented and tested before becoming production logic.
-
-Exit criteria:
-
-Known duplicate scenarios are handled predictably and can be tested automatically.
+* Positive and negative duplicate scenarios have explicit test cases.
+* Normalized title or URL equality does not silently delete or overwrite
+  article records.
+* Ingestion uses the comparison only after its duplicate semantics are
+  explicit.
+* Implementation behavior and limitations are documented in
+  [`pipeline.md`](pipeline.md), and observed results are recorded in
+  [`testing.md`](testing.md).
 
 ---
 
@@ -485,39 +253,3 @@ Potential views include:
 The UI should not imply certainty that the underlying data does not support.
 
 ---
-
-## 5. Not Yet Started
-
-The following are intentionally not considered implemented:
-
-* production feed ingestion;
-* production deduplication;
-* production story matching;
-* production claim extraction;
-* production evidence extraction;
-* automated assessment;
-* LLM integration;
-* embeddings;
-* vector search;
-* autonomous agents;
-* scheduled processing;
-* production web interface;
-* large-scale deployment.
-
-The current Baseline Ingestion implementation is a tested development milestone, not yet a production ingestion system.
-
----
-
-## 9. Current Priority
-
-The immediate priority is now:
-
-**Deduplication**
-
-Baseline Ingestion has reached its current implementation and validation milestone.
-
-The next work should therefore investigate deterministic duplicate detection beyond the existing `(source_id, url)` database constraint.
-
-No AI integration, embeddings, autonomous agents, or UI work is required at this stage.
-
-The database schema is not expected to change unless implementation demonstrates a requirement that the current model cannot represent.

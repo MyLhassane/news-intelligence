@@ -1,5 +1,10 @@
 # Project Vision
 
+This document is authoritative for the project's purpose, long-term goals, and
+non-goals. It does not track implementation status or test results; see
+[`roadmap.md`](roadmap.md) for project state and [`testing.md`](testing.md)
+for observed validation.
+
 ## 1. Problem
 
 The modern news environment produces a very large volume of information from sources with different roles, origins, editorial processes, and relationships to the events they report.

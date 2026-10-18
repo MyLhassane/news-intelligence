@@ -1,5 +1,11 @@
 # Processing Pipeline
 
+This document defines pipeline stage contracts and explains implemented
+behavior. The active stage and its acceptance criteria are maintained in
+[`roadmap.md`](roadmap.md); database structure is specified in
+[`database-schema.md`](database-schema.md), and validation results are in
+[`testing.md`](testing.md).
+
 ## 1. Purpose
 
 The processing pipeline defines how information moves through the News Intelligence system.
@@ -429,45 +435,12 @@ The system should favor reproducible processing and historical traceability.
 
 ---
 
-## 13. Current Implementation Strategy
+## 13. Implementation Status
 
-The implementation will proceed from the simplest reliable layer toward more advanced automation.
-
-### Phase A — Foundation
-
-* repository;
-* documentation;
-* canonical database schema;
-* reproducible database tests.
-
-### Phase B — Deterministic Processing
-
-* ingestion;
-* URL normalization;
-* duplicate detection;
-* metadata normalization;
-* basic story matching.
-
-### Phase C — Information Extraction
-
-* claim extraction;
-* evidence identification;
-* provenance linking.
-
-### Phase D — Assessment
-
-* assessment workflow;
-* human review;
-* historical assessment tracking.
-
-### Phase E — AI Assistance
-
-* semantic story matching;
-* AI-assisted claim extraction;
-* AI-assisted evidence identification;
-* AI assessment proposals.
-
-AI should improve the pipeline without removing the ability to inspect the underlying records.
+The roadmap is the single source of truth for completed, active, planned, and
+blocked stages, including stage priorities and acceptance criteria. This
+document describes the pipeline behavior and should not maintain a second
+project schedule.
 
 ---
 

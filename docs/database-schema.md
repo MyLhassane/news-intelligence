@@ -1,5 +1,12 @@
 # Database Schema
 
+This document explains the database model and its constraints. The canonical
+structure is defined by [`../database/schema.sql`](../database/schema.sql) and
+[`../database/views.sql`](../database/views.sql); edit and validate those
+artifacts when the physical schema changes. Project-level rationale belongs
+in [`decisions.md`](decisions.md), and test procedures/results belong in
+[`testing.md`](testing.md).
+
 ## 1. Purpose
 
 The database is the structural foundation of the News Intelligence system.
@@ -628,35 +635,11 @@ These are not interchangeable concepts.
 
 ---
 
-# 7. Current Validation State
+# 7. Validation Record
 
-The schema has been manually tested in PostgreSQL using both real-world and synthetic records.
-
-### Real-world validation
-
-A dark matter research story was used to validate relationships involving:
-
-* Reuters;
-* LUX-ZEPLIN;
-* Lawrence Berkeley National Laboratory;
-* Imperial College London;
-* a research paper;
-* article-to-evidence relationships;
-* claim-to-evidence relationships;
-* provenance.
-
-### Synthetic validation
-
-Synthetic records were used to test:
-
-* conflicting evidence;
-* subsequent resolution;
-* historical assessments;
-* shared underlying evidence;
-* apparent multi-source confirmation;
-* independent evidence relationships.
-
-Synthetic records must never be interpreted as real-world evidence.
+Validation methods and observed results are maintained in
+[`testing.md`](testing.md). This document describes the schema and does not
+duplicate test outcomes.
 
 ---
 
@@ -713,18 +696,17 @@ This prevents schema growth based on speculation.
 
 # 10. Canonical SQL
 
-The repository will maintain canonical SQL representations of the database:
+The canonical SQL representations of the database are:
 
 ```text
 database/schema.sql
 database/views.sql
 ```
 
-These files should eventually reproduce the validated database structure and views.
-
-They should be treated as project artifacts, not manually maintained descriptions that can drift from the actual schema.
-
-Before declaring them canonical, they must be compared against the currently tested PostgreSQL database.
+These files define the physical schema and views. The prose in this document
+explains their domain meaning and should be updated when they change. Procedures
+for reconstructing and validating the SQL are recorded in
+[`testing.md`](testing.md).
 
 ## Provenance and Evidence Multiplicity
 

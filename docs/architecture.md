@@ -1,5 +1,11 @@
 # System Architecture
 
+This document is authoritative for conceptual boundaries, domain concepts, and
+architectural invariants. The implemented stage is tracked in
+[`roadmap.md`](roadmap.md), stage behavior in [`pipeline.md`](pipeline.md),
+physical database structure in [`database-schema.md`](database-schema.md),
+and decision rationale in [`decisions.md`](decisions.md).
+
 ## 1. Architectural Objective
 
 The architecture is designed around one central requirement:
@@ -155,15 +161,9 @@ Represent identifiable statements associated with a story.
 
 Claims are typed because not every statement has the same verification characteristics.
 
-Current claim types include:
-
-* factual;
-* quote;
-* attribution;
-* prediction;
-* opinion;
-* statistical;
-* other.
+Claims carry a type because different kinds of statements require different
+treatment. The supported values and database constraints are documented in
+[`database-schema.md`](database-schema.md).
 
 ### Evidence
 

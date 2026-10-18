@@ -555,6 +555,9 @@ The RSS fixtures are controlled local synthetic files stored under:
 tests/fixtures/feeds/
 ```
 
+The project targets PostgreSQL 16 or later. The Python version requirement and
+runtime dependencies are defined in [`../pyproject.toml`](../pyproject.toml).
+
 ## Database Safeguards
 
 ### Purpose
@@ -635,7 +638,7 @@ file is named `integration_test_ingestion.py`.
 ## Unit Tests
 
 The current source tree contains 27 unit test methods, counted statically.
-This count does not establish that the tests run or pass.
+The verified execution result for the suite is recorded below.
 
 The unit tests cover:
 
@@ -649,8 +652,12 @@ The unit tests cover:
 
 ## Integration Tests
 
-The current source tree contains 9 integration test methods, counted
-statically. This count does not establish that the tests run or pass.
+The current source tree contains 9 database-backed integration test methods
+and 6 database-safeguard test methods in the same integration test module,
+counted statically. The integration discovery command runs all 15 methods;
+the safeguard methods validate connection checks using parsed parameters and
+mock connection objects, without connecting to a database. The verified
+execution result for the suite is recorded below.
 
 The integration tests cover:
 
@@ -725,13 +732,17 @@ also fails before insertion.
 The current test suite has been executed against the development database (`news_test`) with the following actual results:
 
 ```text
-27 unit tests         → passing
-6 safeguard tests     → passing
-9 integration tests   → passing
-Total: 42 tests       → passing (0 failures)
+27 unit tests                         → passing
+6 database-safeguard tests            → passing
+9 database-backed integration tests   → passing
+Total: 42 tests                       → passing (0 failures)
 ```
 
-These current results verify the behavior of the deterministic ingestion baseline, URL/title normalization, and the database safeguards. They remain distinct from the earlier historical baseline results recorded below.
+The 6 safeguard tests are in the integration test module and are discovered by
+the integration command above; they use mocks and do not connect to the
+database. These results verify the behavior of the deterministic ingestion
+baseline, URL/title normalization, and the database safeguards. They remain
+distinct from the earlier historical baseline results recorded below.
 
 They do not establish that the ingestion system is production-ready for arbitrary external feeds, large-scale processing, unreliable networks, feed-specific extensions, or changing publisher formats.
 

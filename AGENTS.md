@@ -187,6 +187,32 @@ update the corresponding documentation.
 
 Do not allow the implementation to become more current than the project documentation.
 
+### Documentation Ownership
+
+Each document has one authoritative subject. Treat the implementation and canonical SQL as the facts about what exists; use the document below as the maintained explanation for its subject. Other documents should link to that authority instead of copying its status, lists, commands, results, or detailed content.
+
+| Subject | Authoritative file | Keep here |
+|---|---|---|
+| Project purpose, long-term goals, and non-goals | `docs/vision.md` | Why the project exists and what success means |
+| Conceptual architecture and domain boundaries | `docs/architecture.md` | Core concepts, invariants, and relationships |
+| Actual database structure and constraints | `database/schema.sql`, `database/views.sql`; explained in `docs/database-schema.md` | Canonical SQL is structural truth; the document explains its meaning and change policy |
+| Rationale and history of technical choices | `docs/decisions.md` | Accepted, superseded, or reconsidered decisions and why |
+| Pipeline stage contracts and implemented behavior | `docs/pipeline.md` | Inputs, outputs, rules, failure behavior, and what is or is not integrated |
+| Current project state, active stage, priorities, and acceptance criteria | `docs/roadmap.md` | The single source for what work is current, next, complete, or blocked |
+| Test commands, scope, safeguards, and observed results | `docs/testing.md` | Reproducible test procedures and results actually observed |
+| Project entry point and navigation | `README.md` | Brief introduction and links; no second copy of current status or test results |
+| Agent operating rules and this ownership policy | `AGENTS.md` | How to work and keep the repository documentation coherent |
+
+### Update and Cross-Reference Rules
+
+1. Before changing documentation, identify which authoritative subject changed using the table above.
+2. Update that authoritative document when the underlying facts change. Update another document only to remove stale duplicated text or replace it with a link/reference.
+3. A source utility or test alone does not make a pipeline stage complete. Confirm integration and acceptance criteria from `docs/roadmap.md` before changing stage status.
+4. Record test counts and pass/fail claims only in `docs/testing.md`, together with the commands and observed result. Other files may link to that record but must not maintain separate totals.
+5. Keep `README.md` as navigation. Do not copy the roadmap, pipeline specification, schema description, or test report into it.
+6. If two documents disagree, inspect the implementation, tests, or canonical SQL as applicable; correct the authoritative document, then replace stale copies with references. Do not resolve a contradiction by adding another copy.
+7. Before finishing a task, check the affected documents and all inbound references for stale claims, duplicated facts, and broken paths. Do not update unrelated documents merely to make them appear current.
+
 ## 12. Small Changes
 
 Prefer small, understandable changes.

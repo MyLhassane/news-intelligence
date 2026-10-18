@@ -1,5 +1,11 @@
 # Architecture Decisions
 
+This document is the authoritative history of architectural decisions and
+their rationale. It does not track current implementation status, schema
+details, or test results; see [`roadmap.md`](roadmap.md),
+[`database-schema.md`](database-schema.md), and [`testing.md`](testing.md)
+for those respective facts.
+
 This document records important decisions that shape the News Intelligence system.
 
 The purpose is to preserve architectural reasoning, not merely the final implementation.
