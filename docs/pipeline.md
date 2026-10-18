@@ -352,6 +352,16 @@ Does not automatically produce a final status
 
 The assessment layer exists because evidence may conflict or require interpretation.
 
+### Standalone Assessment Baseline
+
+`create_assessment` constructs an assessment record with status, actor type,
+optional actor name and reasoning, role, and creation time. It appends the new
+record to a copied in-memory history list, preserving prior entries.
+
+This utility does not write to `claim_assessments`, update `claims.status`, or
+enforce a proposal/review/decision sequence. Persistence and integration into
+a reviewable workflow remain outstanding.
+
 ---
 
 ## 9. Assessment History

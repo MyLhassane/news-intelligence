@@ -647,7 +647,8 @@ The current source tree contains unit test methods covering:
 * deterministic title normalization;
 * deterministic URL normalization;
 * deterministic duplicate classification (`EXACT_DUPLICATE`, `NEAR_DUPLICATE`, `DISTINCT`);
-* deterministic story-matching outcomes (`MATCH`, `NEW_STORY`, `REVIEW`).
+* deterministic story-matching outcomes (`MATCH`, `NEW_STORY`, `REVIEW`);
+* assessment record construction, append-only in-memory history, and unique next IDs.
 
 ## Integration Tests
 
@@ -760,6 +761,15 @@ The focused claim/evidence provenance trace tests were also run separately:
 ```text
 PYTHONPATH=src .venv/bin/python -m unittest tests/unit/test_claim_evidence_pipeline.py
 Ran 4 tests — OK
+```
+
+This targeted result does not represent a run of the complete test suite.
+
+The focused assessment-workflow unit tests were run separately:
+
+```text
+PYTHONPATH=src .venv/bin/python -m unittest tests/unit/test_assessment_workflow.py
+Ran 6 tests — OK
 ```
 
 This targeted result does not represent a run of the complete test suite.

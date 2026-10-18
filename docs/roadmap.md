@@ -111,32 +111,16 @@ provenance; those remain separate integration work if required.
 
 ### Stage 5 — Assessment Workflow
 
-**Status: Not started**
+**Status: Standalone baseline implemented; persistence/integration pending**
 
-Goal:
+The standalone assessment constructor and its limits are documented in
+[`pipeline.md`](pipeline.md); its focused test result is in
+[`testing.md`](testing.md). It creates an in-memory assessment record and
+appends it to the supplied history without mutating the prior entries.
 
-Implement a reviewable assessment process.
-
-The system should support:
-
-* human assessment;
-* rule-based assessment;
-* AI proposals;
-* human review;
-* historical assessment records.
-
-AI-generated assessments must not silently replace historical decisions.
-
-Exit criteria:
-
-Every assessment can be identified by:
-
-* actor type;
-* actor name when applicable;
-* assessment role;
-* status;
-* reasoning;
-* creation time.
+This does not persist records to `claim_assessments` or implement a connected
+proposal/review/decision workflow. Those integration steps remain outstanding
+before the assessment workflow can be considered complete.
 
 ---
 
