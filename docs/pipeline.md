@@ -106,8 +106,15 @@ original representation, and removes fragments.
 
 URLs containing credentials and URLs that do not use HTTP or HTTPS are rejected.
 
-This utility is not yet connected to article ingestion or duplicate classification.
-A normalized URL is a comparison signal, not proof that two articles are duplicates.
+### Deterministic Duplicate Classification
+
+A deterministic duplicate classification utility (`classify_duplicate`) is implemented using existing URL and title normalization utilities. It classifies relationships between an existing article and an incoming article into three categories:
+
+1. **`EXACT_DUPLICATE`**: Same `source_id` and normalized URL (ignoring default ports, tracking parameters, and case differences in scheme/host).
+2. **`NEAR_DUPLICATE`**: Same `source_id`, different URL, but matching normalized title (Unicode case-folded, whitespace-collapsed).
+3. **`DISTINCT`**: Different source or distinct URLs and titles.
+
+This classification does not delete, merge, or overwrite existing article records. Article records remain immutable in the database, preserving individual discovery time, source attribution, and raw URLs.
 
 ### Important distinction
 

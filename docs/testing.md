@@ -637,10 +637,7 @@ file is named `integration_test_ingestion.py`.
 
 ## Unit Tests
 
-The current source tree contains 27 unit test methods, counted statically.
-The verified execution result for the suite is recorded below.
-
-The unit tests cover:
+The current source tree contains unit test methods covering:
 
 * RSS item parsing;
 * required and optional article validation;
@@ -648,7 +645,8 @@ The unit tests cover:
 * publication-date normalization;
 * handling of missing optional fields;
 * deterministic title normalization;
-* deterministic URL normalization.
+* deterministic URL normalization;
+* deterministic duplicate classification (`EXACT_DUPLICATE`, `NEAR_DUPLICATE`, `DISTINCT`).
 
 ## Integration Tests
 
