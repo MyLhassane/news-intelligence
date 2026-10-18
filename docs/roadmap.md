@@ -12,6 +12,18 @@ The project is still in development and is not a production news-processing
 system. The active stage is the single stage marked **In progress** below.
 Verified test state is maintained in [`testing.md`](testing.md).
 
+### Stage sequencing and completion
+
+Work proceeds in roadmap order. Only one stage is active at a time; a
+standalone utility or test for a later stage is preparatory work, not a reason
+to mark that stage complete or advance the active stage.
+
+A stage is complete only when its acceptance criteria below are demonstrated
+in the intended application workflow, with relevant tests and documentation.
+If a baseline exists without that integration, record it as a baseline and
+keep the stage incomplete. Do not start implementation of the next stage
+before the active stage is complete unless the user explicitly changes scope.
+
 ---
 
 ## 2. Completed
@@ -54,24 +66,19 @@ Existing signals, integration status, and behavior are documented in
 
 ### Next task
 
-Define and implement the first deterministic duplicate-classification
-behavior using the existing normalization utilities. Keep this task separate
-from story matching, and do not merge or discard article records as a side
-effect.
-
-Before changing implementation, specify through tests which URL variants are
-treated as equivalent, which title/content matches remain distinct, and how
-source boundaries affect a match. Preserve original article data and current
-`(source_id, url)` insertion behavior unless a demonstrated requirement and
-documented decision justify changing them.
+Integrate the existing deterministic duplicate classifier into article
+ingestion. Before changing insertion behavior, explicitly define and test how
+`EXACT_DUPLICATE`, `NEAR_DUPLICATE`, and `DISTINCT` affect the incoming
+article. Keep this work separate from story matching. Preserve original
+article data and do not merge, delete, or overwrite records.
 
 ### Acceptance criteria
 
 * Positive and negative duplicate scenarios have explicit test cases.
-* Normalized title or URL equality does not silently delete or overwrite
-  article records.
-* Ingestion uses the comparison only after its duplicate semantics are
-  explicit.
+* Ingestion uses the classifier and applies documented, tested handling for
+  each classification.
+* Existing `(source_id, url)` behavior and article data are preserved unless
+  an explicit requirement and documented decision justify changing them.
 * Implementation behavior and limitations are documented in
   [`pipeline.md`](pipeline.md), and observed results are recorded in
   [`testing.md`](testing.md).
@@ -80,47 +87,75 @@ documented decision justify changing them.
 
 ### Stage 3 — Story Matching
 
-**Status: Complete at current scope**
+**Status: Baseline implemented; incomplete and not active**
 
-The deterministic baseline and its three outcomes are documented in
-[`pipeline.md`](pipeline.md). The exit criterion is met by reproducible
-matching, non-matching, and uncertain cases; the focused test result is
-recorded in [`testing.md`](testing.md).
+The standalone deterministic matcher and its focused test result are
+documented in [`pipeline.md`](pipeline.md) and [`testing.md`](testing.md).
+This is preparatory work only; it does not complete the stage or change the
+active priority.
 
-The matcher is a standalone utility: it does not create or persist stories or
-run as part of article ingestion. This limitation does not prevent completion
-of the current baseline scope. Any later integration should be specified as a
-separate task without changing this completed status retroactively.
+### Completion criteria
+
+* The matcher runs in the intended article-processing workflow against
+  candidate stories.
+* `MATCH` associates the article with an existing story using the current
+  `article_stories` model.
+* `NEW_STORY` follows an explicit, tested story-creation and article-linking
+  behavior.
+* `REVIEW` leaves the association undecided rather than forcing a match.
+* Tests cover these outcomes and their resulting persisted relationships.
+* The behavior and limitations are documented in [`pipeline.md`](pipeline.md),
+  and observed results in [`testing.md`](testing.md).
 
 ---
 
 ### Stage 4 — Claim and Evidence Pipeline
 
-**Status: Complete at current scope**
+**Status: Baseline implemented; incomplete and not active**
 
-The current trace behavior, roles, and limits are documented in
-[`pipeline.md`](pipeline.md); the focused test outcome is recorded in
-[`testing.md`](testing.md). Supporting, contradicting, and contextual
-relationships retain their provenance roles in the trace.
+The standalone provenance-trace utility and its focused test outcome are
+documented in [`pipeline.md`](pipeline.md) and [`testing.md`](testing.md).
+It operates only on relationships supplied to it; this preparatory utility
+does not complete the stage or change the active priority.
 
-This scope provides a standalone trace over already-linked input records. It
-does not create or persist claim/evidence relationships or discover
-provenance; those remain separate integration work if required.
+### Completion criteria
+
+* Claims are connected to their stories and reporting articles using the
+  existing relationship model.
+* Evidence is connected to claims with explicit supporting, contradicting,
+  contextual, or other applicable relationships.
+* Evidence provenance distinguishes its producer or issuer from publishers
+  and other roles; provenance is not inferred merely from an article mention.
+* The connected records can be traced from claim through evidence to
+  provenance, with tests covering relationships and missing or conflicting
+  information.
+* Evidence relationships do not silently determine or overwrite an
+  assessment.
+* The behavior and limitations are documented in [`pipeline.md`](pipeline.md),
+  and observed results in [`testing.md`](testing.md).
 
 ---
 
 ### Stage 5 — Assessment Workflow
 
-**Status: Standalone baseline implemented; persistence/integration pending**
+**Status: Baseline implemented; incomplete and not active**
 
-The standalone assessment constructor and its limits are documented in
-[`pipeline.md`](pipeline.md); its focused test result is in
-[`testing.md`](testing.md). It creates an in-memory assessment record and
-appends it to the supplied history without mutating the prior entries.
+The standalone in-memory assessment constructor and its focused test result
+are documented in [`pipeline.md`](pipeline.md) and [`testing.md`](testing.md).
+This preparatory utility does not persist records or complete the workflow.
 
-This does not persist records to `claim_assessments` or implement a connected
-proposal/review/decision workflow. Those integration steps remain outstanding
-before the assessment workflow can be considered complete.
+### Completion criteria
+
+* Assessments are persisted as new historical records in
+  `claim_assessments`; previous assessments are never silently overwritten.
+* The current `claims.status` is updated only through the documented workflow
+  and remains distinct from the historical assessment records.
+* Proposal, review, and decision roles have an explicit, tested workflow that
+  preserves actor type, actor name, status, reasoning, and creation time.
+* Tests verify persistence, append-only history, and the distinction between
+  AI proposals and human decisions.
+* The behavior and limitations are documented in [`pipeline.md`](pipeline.md),
+  and observed results in [`testing.md`](testing.md).
 
 ---
 
