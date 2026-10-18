@@ -80,27 +80,17 @@ documented decision justify changing them.
 
 ### Stage 3 — Story Matching
 
-**Status: Not started**
+**Status: Complete at current scope**
 
-Goal:
+The deterministic baseline and its three outcomes are documented in
+[`pipeline.md`](pipeline.md). The exit criterion is met by reproducible
+matching, non-matching, and uncertain cases; the focused test result is
+recorded in [`testing.md`](testing.md).
 
-Determine whether an article belongs to an existing story.
-
-The baseline matcher must allow three outcomes:
-
-* `MATCH`
-* `NEW_STORY`
-* `REVIEW`
-
-The system must not force an uncertain article into an existing story.
-
-Initial implementation should be deterministic.
-
-AI/LLM-assisted matching may be introduced later and compared against the deterministic baseline.
-
-Exit criteria:
-
-Known matching and non-matching cases produce reproducible results, including explicit handling of uncertainty.
+The matcher is a standalone utility: it does not create or persist stories or
+run as part of article ingestion. This limitation does not prevent completion
+of the current baseline scope. Any later integration should be specified as a
+separate task without changing this completed status retroactively.
 
 ---
 
