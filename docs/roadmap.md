@@ -96,38 +96,16 @@ separate task without changing this completed status retroactively.
 
 ### Stage 4 — Claim and Evidence Pipeline
 
-**Status: Not started**
+**Status: Complete at current scope**
 
-Goal:
+The current trace behavior, roles, and limits are documented in
+[`pipeline.md`](pipeline.md); the focused test outcome is recorded in
+[`testing.md`](testing.md). Supporting, contradicting, and contextual
+relationships retain their provenance roles in the trace.
 
-Connect articles to claims and evidence while preserving provenance.
-
-The intended flow is:
-
-```text
-Article
-   ↓
-Story
-   ↓
-Claim
-   ↓
-Evidence
-   ↓
-Evidence provenance
-   ↓
-Assessment
-```
-
-The implementation must preserve the distinction between:
-
-* what an article reports;
-* what evidence exists;
-* what evidence supports or contradicts a claim;
-* and what an assessment concludes.
-
-Exit criteria:
-
-A claim can be traced through its supporting and contradicting evidence back to the relevant provenance.
+This scope provides a standalone trace over already-linked input records. It
+does not create or persist claim/evidence relationships or discover
+provenance; those remain separate integration work if required.
 
 ---
 

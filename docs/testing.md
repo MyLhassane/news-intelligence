@@ -755,6 +755,15 @@ Ran 5 tests — OK
 
 This targeted result does not represent a run of the complete test suite.
 
+The focused claim/evidence provenance trace tests were also run separately:
+
+```text
+PYTHONPATH=src .venv/bin/python -m unittest tests/unit/test_claim_evidence_pipeline.py
+Ran 4 tests — OK
+```
+
+This targeted result does not represent a run of the complete test suite.
+
 ## Current Ingestion Limitations
 
 The baseline intentionally does not yet provide:

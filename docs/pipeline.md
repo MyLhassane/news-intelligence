@@ -298,6 +298,20 @@ Number of independent evidence items
 
 The system should preserve this distinction instead of reducing it to a source count.
 
+### Claim-to-Evidence Provenance Trace
+
+The standalone `trace_claim_provenance` utility assembles a claim's linked
+supporting, contradicting, or contextual evidence with its supplied
+`evidence_sources` provenance links. It keeps producer/issuer roles distinct
+from publisher and other roles. `traceable` is true only when there is at
+least one evidence item and every item has at least one supplied provenance
+link.
+
+The utility reports whether a producer or issuer is present; this is not a
+verification of independence. It does not query or write to the database,
+discover provenance, or create claim/evidence relationships. Those inputs
+must already be linked by the caller.
+
 ---
 
 ## 8. Stage 7 — Assessment
