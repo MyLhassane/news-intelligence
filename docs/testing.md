@@ -613,12 +613,12 @@ finally:
     conn.rollback()
 ```
 
-No schema changes were made. No article ingestion logic was modified.
+No schema changes were made.
 
 ## Running Tests
 
-Run the following commands from the repository root. These are documented
-commands and have not been run as part of this update.
+Run the following commands from the repository root. Both commands were run
+during the current update; the observed results are recorded below.
 
 ### Unit tests
 
@@ -652,9 +652,9 @@ The current source tree contains unit test methods covering:
 
 ## Integration Tests
 
-The current source tree contains 9 database-backed integration test methods
+The current source tree contains 10 database-backed integration test methods
 and 6 database-safeguard test methods in the same integration test module,
-counted statically. The integration discovery command runs all 15 methods;
+counted statically. The integration discovery command runs all 16 methods;
 the safeguard methods validate connection checks using parsed parameters and
 mock connection objects, without connecting to a database. The verified
 execution result for the suite is recorded below.
@@ -732,16 +732,16 @@ also fails before insertion.
 The current test suite has been executed against the development database (`news_test`) with the following actual results:
 
 ```text
-27 unit tests                         → passing
+53 unit tests                         → passing
 6 database-safeguard tests            → passing
-9 database-backed integration tests   → passing
-Total: 42 tests                       → passing (0 failures)
+10 database-backed integration tests  → passing
+Total: 69 tests                       → passing (0 failures)
 ```
 
 The 6 safeguard tests are in the integration test module and are discovered by
 the integration command above; they use mocks and do not connect to the
-database. These results verify the behavior of the deterministic ingestion
-baseline, URL/title normalization, and the database safeguards. They remain
+database. These results verify deterministic ingestion and deduplication
+behavior, URL/title normalization, and the database safeguards. They remain
 distinct from the earlier historical baseline results recorded below.
 
 They do not establish that the ingestion system is production-ready for arbitrary external feeds, large-scale processing, unreliable networks, feed-specific extensions, or changing publisher formats.

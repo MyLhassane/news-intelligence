@@ -116,6 +116,49 @@ class TestArticleIngestion(unittest.TestCase):
             finally:
                 conn.rollback()
 
+    def test_exact_duplicate_with_differing_raw_url_formatting_is_rejected_by_classifier(self):
+        require_test_database(DATABASE_URL)
+        with psycopg.connect(DATABASE_URL) as conn:
+            conn.autocommit = False
+            require_connected_database_is_test(conn)
+
+            try:
+                article_v1 = {
+                    "title": "Classification Routing Test",
+                    "url": "https://example.org/path?b=2&a=1",
+                    "author": "Author",
+                    "summary": "Summary",
+                }
+                # Same normalized URL (different query parameter ordering and scheme casing)
+                article_v2 = {
+                    "title": "Classification Routing Test",
+                    "url": "HTTPS://EXAMPLE.ORG/path?a=1&b=2",
+                    "author": "Author",
+                    "summary": "Summary",
+                }
+
+                res1 = insert_article(conn, source_id=1, feed_id=None, article=article_v1)
+                res2 = insert_article(conn, source_id=1, feed_id=None, article=article_v2)
+
+                self.assertTrue(res1)
+                self.assertFalse(res2)  # Proves classify_duplicate governed and rejected insertion even with raw url differences
+
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT COUNT(*)
+                        FROM articles
+                        WHERE source_id = 1
+                          AND title = 'Classification Routing Test'
+                        """
+                    )
+                    count = cur.fetchone()[0]
+
+                self.assertEqual(count, 1)
+
+            finally:
+                conn.rollback()
+
     def test_duplicate_article_is_ignored(self):
         require_test_database(DATABASE_URL)
         with psycopg.connect(DATABASE_URL) as conn:

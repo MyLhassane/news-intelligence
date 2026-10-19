@@ -85,5 +85,32 @@ class TestURLNormalization(unittest.TestCase):
             "https://example.org/article?id=42",
         )
 
+    def test_preserves_raw_encoded_query_values(self):
+        self.assertEqual(
+            normalize_url("https://example.org/article?x=%2F&y=a+b"),
+            "https://example.org/article?x=%2F&y=a+b",
+        )
+
+    def test_reorders_distinct_keys_identically(self):
+        url1 = "https://example.org/article?b=2&a=1"
+        url2 = "https://example.org/article?a=1&b=2"
+        self.assertEqual(normalize_url(url1), normalize_url(url2))
+
+    def test_reorders_distinct_keys_with_different_encodings(self):
+        url1 = "https://example.org/article?b%3D1=2&a=1"
+        url2 = "https://example.org/article?a=1&b%3D1=2"
+        self.assertEqual(normalize_url(url1), normalize_url(url2))
+
+    def test_preserves_repeated_key_value_order(self):
+        url1 = "https://example.org/article?tag=a&tag=b"
+        url2 = "https://example.org/article?tag=b&tag=a"
+        self.assertNotEqual(normalize_url(url1), normalize_url(url2))
+
+    def test_handles_flag_parameter_without_equal_sign(self):
+        self.assertEqual(
+            normalize_url("https://example.org/article?flag&id=42"),
+            "https://example.org/article?flag&id=42",
+        )
+
 if __name__ == "__main__":
     unittest.main()

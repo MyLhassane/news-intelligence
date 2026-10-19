@@ -95,14 +95,12 @@ Title normalization is implemented as a separate deterministic utility.
 It applies Unicode case folding, trims surrounding whitespace, and collapses
 consecutive whitespace. Punctuation is preserved, and empty titles are rejected.
 
-The normalized title is not yet used to reject, merge, or classify articles.
-Title equality alone is not sufficient to establish that two articles are duplicates.
+The normalized title is actively used by `classify_duplicate` to identify `NEAR_DUPLICATE` relationships when an incoming article shares a normalized title with an existing article from the same source under a different URL. Title equality alone (when URLs differ) does not merge or delete articles, but classifies them as near-duplicates.
 
 URL normalization is implemented as a separate deterministic utility.
 
 It lowercases the URL scheme and hostname, removes default HTTP/HTTPS ports,
-removes known tracking parameters, preserves other query parameters and their
-original representation, and removes fragments.
+removes known tracking parameters, sorts distinct query keys deterministically (casefolded), preserves the relative order of repeated query values for the same key, preserves the original encoding representation of parameter values without double encoding, and removes fragments and empty query segments.
 
 URLs containing credentials and URLs that do not use HTTP or HTTPS are rejected.
 

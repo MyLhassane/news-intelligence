@@ -51,34 +51,23 @@ to the active stage.
 
 ### Stage 2 — Deduplication
 
-**Status: In progress**
+**Status: Complete at current scope**
 
 Goal:
 
 Identify when incoming articles are duplicates or near-duplicates of previously stored material.
 
-The current `(source_id, url)` uniqueness constraint remains the baseline
-duplicate-insertion safeguard.
+The deterministic classifier (`classify_duplicate`) actively governs insertion behavior during ingestion (`EXACT_DUPLICATE` is rejected explicitly prior to insertion, while `NEAR_DUPLICATE` and `DISTINCT` preserve original article records without merging, deletion, or overwriting; database-level `(source_id, url)` unique constraint provides secondary safety).
 
 Existing signals, integration status, and behavior are documented in
 [`pipeline.md`](pipeline.md); test coverage/results are recorded in
 [`testing.md`](testing.md).
 
-### Next task
-
-Integrate the existing deterministic duplicate classifier into article
-ingestion. Before changing insertion behavior, explicitly define and test how
-`EXACT_DUPLICATE`, `NEAR_DUPLICATE`, and `DISTINCT` affect the incoming
-article. Keep this work separate from story matching. Preserve original
-article data and do not merge, delete, or overwrite records.
-
 ### Acceptance criteria
 
 * Positive and negative duplicate scenarios have explicit test cases.
-* Ingestion uses the classifier and applies documented, tested handling for
-  each classification.
-* Existing `(source_id, url)` behavior and article data are preserved unless
-  an explicit requirement and documented decision justify changing them.
+* Ingestion uses the classifier (`classify_duplicate`) to explicitly govern insertion behavior (`EXACT_DUPLICATE` skips explicitly prior to insertion, `NEAR_DUPLICATE` and `DISTINCT` preserve original article records without merging, deletion, or overwriting).
+* Existing `(source_id, url)` behavior and article data are preserved.
 * Implementation behavior and limitations are documented in
   [`pipeline.md`](pipeline.md), and observed results are recorded in
   [`testing.md`](testing.md).
