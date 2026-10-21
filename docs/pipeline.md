@@ -158,15 +158,13 @@ There is insufficient evidence for an automatic decision.
 
 This state is important because uncertainty should be represented rather than hidden.
 
-### Initial Baseline
+### Initial Baseline & Workflow Integration
 
-A standalone deterministic token-overlap (Jaccard similarity over normalized titles) utility (`match_story`) has been implemented as an initial baseline. It supports three outcomes:
+A deterministic token-overlap (Jaccard similarity over normalized titles) utility (`match_story`) is integrated into the workflow (`process_article_story_matching`). It supports three outcomes:
 
-1. **`MATCH`**: The article sufficiently overlaps with an existing story above the confidence threshold, with clear separation from alternatives.
-2. **`NEW_STORY`**: The article has low similarity to all existing stories and represents a new event or topic.
-3. **`REVIEW`**: There is insufficient or ambiguous evidence for an automatic decision (e.g. partial title overlap below confidence threshold, or ambiguous close scores between top matching stories, or missing titles).
-
-The utility is not integrated into article ingestion or a persisted story workflow. It does not create or modify stories; uncertainty is represented in its result rather than forced into a match.
+1. **`MATCH`**: The article sufficiently overlaps with an existing story above the confidence threshold, with clear separation from alternatives. Persists a relationship in `article_stories`.
+2. **`NEW_STORY`**: The article has low similarity to all existing stories and represents a new event or topic. Creates a new active story record in `stories` and links the article in `article_stories`.
+3. **`REVIEW`**: There is insufficient or ambiguous evidence for an automatic decision (e.g. partial title overlap below confidence threshold, or ambiguous close scores between top matching stories, or missing titles). Leaves the association undecided without inserting any relationship record.
 
 Semantic embeddings and LLM-based matching may be introduced later and evaluated against this deterministic baseline.
 

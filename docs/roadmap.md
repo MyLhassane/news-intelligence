@@ -76,25 +76,32 @@ Existing signals, integration status, and behavior are documented in
 
 ### Stage 3 — Story Matching
 
-**Status: Baseline implemented; incomplete and not active**
+**Status: Complete at current scope**
 
-The standalone deterministic matcher and its focused test result are
-documented in [`pipeline.md`](pipeline.md) and [`testing.md`](testing.md).
-This is preparatory work only; it does not complete the stage or change the
-active priority.
+The deterministic matcher (`match_story`) is integrated into article insertion
+through `process_article_story_matching`. `MATCH` links the article to an
+existing story; `NEW_STORY` creates and links one active story; `REVIEW`
+preserves the article without creating a story association. These outcomes are
+covered by the database-backed integration test in
+[`../tests/integration_test_story_matching.py`](../tests/integration_test_story_matching.py).
 
-### Completion criteria
+Existing signals, integration status, and behavior are documented in
+[`pipeline.md`](pipeline.md); test coverage/results are recorded in
+[`testing.md`](testing.md).
 
-* The matcher runs in the intended article-processing workflow against
-  candidate stories.
-* `MATCH` associates the article with an existing story using the current
-  `article_stories` model.
-* `NEW_STORY` follows an explicit, tested story-creation and article-linking
-  behavior.
+### Acceptance criteria
+
+* The matcher runs after successful article insertion against active candidate
+  stories.
+* `MATCH` associates the article with the selected existing story using the
+  current `article_stories` model.
+* `NEW_STORY` creates one active story and one article-story relationship.
 * `REVIEW` leaves the association undecided rather than forcing a match.
-* Tests cover these outcomes and their resulting persisted relationships.
-* The behavior and limitations are documented in [`pipeline.md`](pipeline.md),
-  and observed results in [`testing.md`](testing.md).
+* Integration tests cover all outcomes and their persisted relationships,
+  including no new story or relationship for `REVIEW`.
+* Implementation behavior and limitations are documented in
+  [`pipeline.md`](pipeline.md), and observed results are recorded in
+  [`testing.md`](testing.md).
 
 ---
 

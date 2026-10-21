@@ -31,12 +31,14 @@ def ingest_feed(
             )
             continue
 
-        was_inserted = insert_article(
+        insert_result = insert_article(
             conn,
             source_id=source_id,
             feed_id=feed_id,
             article=article,
         )
+
+        was_inserted, article_id = insert_result
 
         if was_inserted:
             inserted += 1

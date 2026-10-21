@@ -632,8 +632,8 @@ PYTHONPATH=src .venv/bin/python -m unittest discover -s tests/unit -p 'test_*.py
 PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -p 'integration_test_*.py'
 ```
 
-The integration-test discovery pattern is specified explicitly because the
-file is named `integration_test_ingestion.py`.
+The integration-test discovery pattern matches both
+`integration_test_ingestion.py` and `integration_test_story_matching.py`.
 
 ## Unit Tests
 
@@ -653,11 +653,13 @@ The current source tree contains unit test methods covering:
 ## Integration Tests
 
 The current source tree contains 10 database-backed integration test methods
-and 6 database-safeguard test methods in the same integration test module,
-counted statically. The integration discovery command runs all 16 methods;
-the safeguard methods validate connection checks using parsed parameters and
-mock connection objects, without connecting to a database. The verified
-execution result for the suite is recorded below.
+in `tests/integration_test_ingestion.py`, one database-backed story-matching
+integration test in `tests/integration_test_story_matching.py`, and 6
+database-safeguard test methods in `tests/integration_test_ingestion.py`.
+The integration discovery command runs all 17 methods. The safeguard methods
+validate connection checks using parsed parameters and mock connection
+objects, without connecting to a database. The verified execution result for
+the suite is recorded below.
 
 The integration tests cover:
 
@@ -729,25 +731,38 @@ also fails before insertion.
 
 ## Current Test Execution Results
 
-The current test suite has been executed against the development database (`news_test`) with the following actual results:
+The current verified suite (run against the development `news_test` database
+with rollback safeguards) includes:
+
+* **53 unit tests** — covering ingestion, deduplication, normalization, claim/evidence, assessment workflow, and story matching.
+* **6 database-safeguard tests** — verifying database-name enforcement before and after connection.
+* **11 database-backed integration tests** — 10 ingestion tests and 1 end-to-end story-matching test (`test_ingestion_triggers_story_matching_for_match_new_review`).
+* **Total: 70 tests** — all passing with zero failures.
 
 ```text
 53 unit tests                         → passing
 6 database-safeguard tests            → passing
-10 database-backed integration tests  → passing
-Total: 69 tests                       → passing (0 failures)
+11 database-backed integration tests  → passing
+Total: 70 tests                       → passing (0 failures)
 ```
 
-The 6 safeguard tests are in the integration test module and are discovered by
-the integration command above; they use mocks and do not connect to the
-database. These results verify deterministic ingestion and deduplication
+The 6 safeguard tests are in `tests/integration_test_ingestion.py` and are
+discovered by the integration command above; they use mocks and do not connect
+to a database. These results verify deterministic ingestion and deduplication
 behavior, URL/title normalization, and the database safeguards. They remain
 distinct from the earlier historical baseline results recorded below.
 
 They do not establish that the ingestion system is production-ready for arbitrary external feeds, large-scale processing, unreliable networks, feed-specific extensions, or changing publisher formats.
 
-The standalone story-matching utility's focused unit-test file was run
-separately:
+The rebuilt end-to-end story-matching integration test (`tests/integration_test_story_matching.py`) validates persistence for `MATCH` (existing story linked in `article_stories`, with no new story), `NEW_STORY` (one new active story created and linked exactly once), and `REVIEW` (a valid ambiguous-title article is inserted with a verified `article_id`, no `article_stories` link is created, and no story is added):
+
+```text
+PYTHONPATH=src .venv/bin/python -m unittest tests.integration_test_story_matching -v
+Ran 1 tests — OK
+```
+
+These results verify the deterministic ingestion and story-matching behavior.
+The standalone unit-test files were run separately:
 
 ```text
 PYTHONPATH=src .venv/bin/python -m unittest tests/unit/test_story_matching.py
@@ -786,7 +801,7 @@ The baseline intentionally does not yet provide:
 * advanced duplicate detection;
 * article content extraction;
 * article updating;
-* story matching;
+* story matching pipeline (match_story integrated via article_ingestion.py, with workflow persistence);
 * claim extraction;
 * evidence extraction;
 * provenance discovery;

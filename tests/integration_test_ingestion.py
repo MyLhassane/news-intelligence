@@ -82,6 +82,7 @@ class TestArticleIngestion(unittest.TestCase):
                     article=article,
                 )
 
+                if isinstance(inserted, tuple): inserted = inserted[0]
                 self.assertTrue(inserted)
 
                 with conn.cursor() as cur:
@@ -140,7 +141,9 @@ class TestArticleIngestion(unittest.TestCase):
                 res1 = insert_article(conn, source_id=1, feed_id=None, article=article_v1)
                 res2 = insert_article(conn, source_id=1, feed_id=None, article=article_v2)
 
+                if isinstance(res1, tuple): res1 = res1[0]
                 self.assertTrue(res1)
+                if isinstance(res2, tuple): res2 = res2[0]
                 self.assertFalse(res2)  # Proves classify_duplicate governed and rejected insertion even with raw url differences
 
                 with conn.cursor() as cur:
@@ -218,7 +221,9 @@ class TestArticleIngestion(unittest.TestCase):
                     },
                 )
 
+                if isinstance(first_insert, tuple): first_insert = first_insert[0]
                 self.assertTrue(first_insert)
+                if isinstance(second_insert, tuple): second_insert = second_insert[0]
                 self.assertFalse(second_insert)
 
                 with conn.cursor() as cur:
@@ -282,6 +287,7 @@ class TestArticleIngestion(unittest.TestCase):
                     },
                 )
 
+                if isinstance(first_insert, tuple): first_insert = first_insert[0]
                 self.assertTrue(first_insert)
                 self.assertTrue(second_insert)
 
@@ -342,6 +348,7 @@ class TestArticleIngestion(unittest.TestCase):
                     },
                 )
 
+                if isinstance(first_insert, tuple): first_insert = first_insert[0]
                 self.assertTrue(first_insert)
                 self.assertTrue(second_insert)
 
@@ -398,6 +405,7 @@ class TestArticleIngestion(unittest.TestCase):
                     article=article,
                 )
 
+                if isinstance(first_insert, tuple): first_insert = first_insert[0]
                 self.assertTrue(first_insert)
                 self.assertTrue(second_insert)
 

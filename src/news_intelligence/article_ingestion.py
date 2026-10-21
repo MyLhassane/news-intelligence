@@ -1,18 +1,21 @@
 from news_intelligence.article_deduplication import classify_duplicate
+from news_intelligence.story_workflow import process_article_story_matching
 
 
-def insert_article(conn, source_id: int, feed_id: int, article: dict) -> bool:
+def insert_article(conn, source_id: int, feed_id: int, article: dict) -> tuple[bool, int | None]:
     """
     Insert an article into the database, incorporating deterministic deduplication
     classification (EXACT_DUPLICATE, NEAR_DUPLICATE, DISTINCT) against existing
     stored articles for the source before insertion.
 
     Rules:
-    - EXACT_DUPLICATE: Classified prior to insertion and skipped (returns False without inserting).
-      This handles both raw matching and normalized URL matches (e.g. differing casing/query parameter ordering).
+    - EXACT_DUPLICATE: Classified prior to insertion and skipped (returns (False, None) without inserting).
     - NEAR_DUPLICATE: Same source, different URL, but matching normalized title.
       Preserved as a distinct record (no overwrite or deletion) while classified and inserted.
     - DISTINCT: Inserted normally.
+
+    Returns:
+        (inserted_bool, article_id_or_none)
     """
     # 1. Fetch existing articles for this source to run deduplication classification
     with conn.cursor() as cur:
@@ -58,13 +61,8 @@ def insert_article(conn, source_id: int, feed_id: int, article: dict) -> bool:
 
     # 3. Explicitly govern insertion behavior based on classification result
     if classification == "EXACT_DUPLICATE":
-        # When classified as an exact duplicate (whether raw URL match or normalized URL match),
-        # skip insertion entirely and return False.
-        return False
+        return False, None
 
-    # For NEAR_DUPLICATE and DISTINCT, insertion is permitted.
-    # Note: If normalized URL matches an existing article but raw URL differs slightly without being caught
-    # by classify_duplicate, ON CONFLICT DO NOTHING handles raw uniqueness safely.
     query = """
         INSERT INTO articles (
             source_id,
@@ -102,6 +100,21 @@ def insert_article(conn, source_id: int, feed_id: int, article: dict) -> bool:
 
         row = cur.fetchone()
 
-    inserted = row is not None
+    if row is not None:
+        article_id = row[0]
+        # Automatically trigger story matching during ingestion as required by Stage 3
+        # Let errors propagate explicitly; do not swallow silently
+        process_article_story_matching(conn, article_id=article_id, article_title=article["title"])
+        return True, article_id
 
-    return inserted
+    # If ON CONFLICT DO NOTHING triggered because of a raw URL conflict not caught earlier
+    with conn.cursor() as cur:
+        cur.execute(
+            "SELECT id FROM articles WHERE source_id = %s AND url = %s",
+            (source_id, article["url"]),
+        )
+        existing_row = cur.fetchone()
+        if existing_row:
+            return False, existing_row[0]
+
+    return False, None
